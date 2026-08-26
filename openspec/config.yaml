@@ -1,0 +1,46 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Next.js 14+ (App Router), TypeScript, PostgreSQL, Prisma, Redis, BullMQ, Resend, Tailwind CSS
+  Domain: Tienda online de Fortnite con sistema de gifting manual
+  Conventions: TypeScript strict, Zod validation, RESTful APIs, UUIDs, snake_case DB tables
+  Testing: Vitest, 80% coverage mínimo
+  Deployment: Vercel (frontend) + Railway (backend/worker)
+  
+  Reglas clave:
+  - Completar una fase antes de empezar la siguiente
+  - NO implementar pagos online en MVP
+  - NO implementar fulfillment automático en MVP
+  - Credenciales de usuarios encriptadas (solo visibles post-validación)
+  - Timers individuales por bot, nunca resetear
+  - Admin roles: Super Admin + Admin regular
+
+rules:
+  proposal:
+    - Mantener bajo 500 palabras
+    - Incluir sección "Non-goals" clara
+    - Especificar qué capacidades de specs se afectan
+  specs:
+    - Usar lenguaje de requerimientos (DEBE, PUEDE, NO DEBE)
+    - Incluir estados y transiciones
+    - Documentar reglas de negocio
+  design:
+    - Incluir diagramas ASCII cuando aplique
+    - Especificar decisiones técnicas clave
+    - Documentar trade-offs y alternativas consideradas
+  tasks:
+    - Máximo 2-4 horas por tarea
+    - Incluir criterio de aceptación
+    - Ordenar por dependencias
+
+operations:
+  apply:
+    guidance:
+      - Ejecutar tests después de cada fase
+      - No saltar fases
+      - Documentar decisiones en comments de commit
+  archive:
+    guidance:
+      - Verificar que todos los tests pasen
+      - Actualizar AGENTS.md si hay cambios de convenciones
+      - Registrar lecciones aprendidas

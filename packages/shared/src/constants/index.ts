@@ -1,0 +1,46 @@
+export const SUPPORTED_CURRENCIES = ['MXN', 'USD', 'COP', 'ARS', 'PEN', 'EUR'] as const
+export type CurrencyCode = (typeof SUPPORTED_CURRENCIES)[number]
+
+export const PLATFORMS = ['EPIC', 'XBOX', 'PLAYSTATION'] as const
+export type PlatformCode = (typeof PLATFORMS)[number]
+
+export const REQUEST_STATUSES = [
+  'CREATED',
+  'WHATSAPP_OPENED',
+  'CONTACTED',
+  'UNDER_REVIEW',
+  'PRICE_CONFIRMED',
+  'PAYMENT_PENDING',
+  'PAID',
+  'FULFILLMENT_PENDING',
+  'FULFILLED',
+  'CANCELLED',
+  'EXPIRED',
+] as const
+
+export const FRIENDSHIP_REQUEST_STATUSES = [
+  'CREATED',
+  'PROCESSING',
+  'WAITING_ACCEPTANCE',
+  'PARTIALLY_READY',
+  'READY',
+  'CANCELLED',
+] as const
+
+export const BOT_REQUEST_STATUSES = ['PENDING', 'REQUEST_SENT'] as const
+export const FRIENDSHIP_STATUSES = ['PENDING', 'ACCEPTED', 'REJECTED', 'UNKNOWN'] as const
+export const BOT_STATUSES = ['ACTIVE', 'COOLDOWN', 'LIMITED', 'UNAVAILABLE', 'DISABLED', 'ERROR'] as const
+export const PAYMENT_STATUSES = ['PENDING_RECEIPT', 'VALIDATION_IN_PROGRESS', 'VALIDATED', 'REJECTED'] as const
+
+export const PRODUCT_TYPES = [
+  'OUTFIT', 'BACK_BLING', 'PICKAXE', 'GLIDER', 'EMOTE', 'WRAP',
+  'MUSIC_PACK', 'LOADING_SCREEN', 'SPRAY', 'CONTRAIL', 'TOY',
+  'BANNER', 'VBucks', 'BATTLE_PASS', 'CREW', 'BUNDLE', 'OTHER',
+] as const
+
+export const RARITIES = [
+  'COMMON', 'UNCOMMON', 'RARE', 'EPIC', 'LEGENDARY', 'MYTHIC',
+  'EXOTIC', 'ICON_SERIES', 'STAR_WARS', 'DC', 'MARVEL',
+  'GAMING_LEGENDS', 'LAVA', 'FROZEN', 'SHADOW', 'SLURP',
+  'DARK', 'BRIGHT', 'BEYOND',
+] as const

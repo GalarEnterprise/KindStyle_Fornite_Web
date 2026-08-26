@@ -1,0 +1,21 @@
+name: fase-0-foundation
+schema: spec-driven
+created: 2026-01-26
+status: completed
+completed: 2026-08-24
+
+description: |
+  Configuración inicial del monorepo con Next.js, TypeScript, PostgreSQL, Redis, Docker.
+  Establece la base para todas las fases siguientes.
+
+capabilities:
+  - auth
+  - catalog
+  - cart
+  - requests
+  - bots-friendship
+  - payments
+  - currency
+  - notifications
+  - admin
+  - timers

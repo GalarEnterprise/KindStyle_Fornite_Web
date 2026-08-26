@@ -1,0 +1,13 @@
+name: fase-1-catalog
+schema: spec-driven
+created: 2026-08-24
+status: completed
+completed: 2026-08-24
+
+description: |
+  Implementar el sistema de catálogo: integración con Fortnite API, sincronización
+  de tienda diaria, snapshots, motor de giftability, colecciones organizadas y
+  API routes para productos.
+
+capabilities:
+  - catalog
