@@ -129,17 +129,6 @@ describe('Auth Validators', () => {
   })
 })
 
-describe('generateCode', () => {
-  it('generates 6-digit code', async () => {
-    const { generateCode } = await import('@/lib/services/auth/auth-service')
-    // Note: generateCode is not exported, testing via module
-    // This test validates the code generation concept
-    const code = Math.floor(100000 + Math.random() * 900000).toString()
-    expect(code.length).toBe(6)
-    expect(/^\d{6}$/.test(code)).toBe(true)
-  })
-})
-
 describe('Token Service', () => {
   it('generates and verifies access token', async () => {
     const { generateAccessToken, verifyToken } = await import('@/lib/services/auth/token-service')

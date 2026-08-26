@@ -23,6 +23,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
       {products.map((product) => (
         <ProductCard
           key={product.id}
+          productId={product.id}
           name={product.name}
           priceVbucks={product.priceVbucks}
           priceMxn={product.priceMxn}

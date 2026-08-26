@@ -1,0 +1,13 @@
+name: fase-3-cart
+schema: spec-driven
+created: 2026-08-25
+status: completed
+
+description: |
+  Implementar el carrito de compras con soporte para productos especiales (V-Bucks, Crew,
+  Battle Pass): agregar/remover/actualizar items, modal de credenciales con encriptación
+  AES-256-GCM, persistencia en DB (localStorage como cache), y validación de productos
+  contra el catálogo.
+
+capabilities:
+  - cart

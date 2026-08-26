@@ -1,0 +1,13 @@
+name: fase-4-requests
+schema: spec-driven
+created: 2026-08-25
+status: proposed
+
+description: |
+  Implementar el sistema de solicitudes de compra: generación de Request desde el carrito
+  con snapshots de precios, Request Number único (REQ-YYYYMMDD-XXXX), generador de mensaje
+  para WhatsApp con integración wa.me, botón copiar solicitud, tracking de apertura de
+  WhatsApp y listado de solicitudes del cliente.
+
+capabilities:
+  - requests

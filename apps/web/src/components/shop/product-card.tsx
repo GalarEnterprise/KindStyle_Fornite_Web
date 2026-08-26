@@ -1,4 +1,7 @@
+import { AddToCartButton } from '@/components/cart/add-to-cart-button'
+
 interface ProductCardProps {
+  productId?: string
   name: string
   priceVbucks: number
   priceMxn: number
@@ -31,12 +34,14 @@ const RARITY_COLORS: Record<string, string> = {
 }
 
 export function ProductCard({
+  productId,
   name,
   priceVbucks,
   priceMxn,
   imageUrl,
   iconUrl,
   rarity,
+  type,
   visible,
   onAddToCart,
 }: ProductCardProps) {
@@ -82,16 +87,20 @@ export function ProductCard({
         </span>
       </div>
 
-      <button
-        onClick={onAddToCart}
-        disabled={!visible}
-        className="mx-3 mb-3 rounded-md bg-purple-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        <svg className="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
-        Agregar
-      </button>
+      {productId ? (
+        <AddToCartButton productId={productId} productName={name} productType={type} />
+      ) : (
+        <button
+          onClick={onAddToCart}
+          disabled={!visible}
+          className="mx-3 mb-3 rounded-md bg-purple-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          <svg className="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          Agregar
+        </button>
+      )}
     </div>
   )
 }

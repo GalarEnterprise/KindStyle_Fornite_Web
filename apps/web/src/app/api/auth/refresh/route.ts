@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     const result = await refreshSession(refreshToken, userAgent, ipAddress)
 
-    if (!result.success) {
+    if (!result.success || !('tokens' in result) || !result.tokens) {
       return NextResponse.json(result, { status: 401 })
     }
 

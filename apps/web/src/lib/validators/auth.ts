@@ -9,42 +9,52 @@ export const VerifyCodeSchema = z.object({
   code: z.string().length(6, 'El código debe tener 6 dígitos').regex(/^\d{6}$/, 'El código solo puede contener números'),
 })
 
-export const LoginSchema = z.object({
-  email: z.string().email('Email inválido'),
-  method: z.enum(['code', 'password']),
-  code: z.string().length(6).regex(/^\d{6}$/).optional(),
-  password: z.string().min(1).optional(),
-}).refine((data) => {
-  if (data.method === 'code' && !data.code) {
-    return {
-      success: false,
-      error: { code: 'VALIDATION_ERROR', message: 'Código es requerido cuando el método es code' },
+export const LoginSchema = z
+  .object({
+    email: z.string().email('Email inválido'),
+    method: z.enum(['code', 'password']),
+    code: z.string().length(6).regex(/^\d{6}$/).optional(),
+    password: z.string().min(1).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.method === 'code' && !data.code) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['code'],
+        message: 'Código es requerido cuando el método es code',
+      })
     }
-  }
-  if (data.method === 'password' && !data.password) {
-    return {
-      success: false,
-      error: { code: 'VALIDATION_ERROR', message: 'Contraseña es requerida cuando el método es password' },
+    if (data.method === 'password' && !data.password) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['password'],
+        message: 'Contraseña es requerida cuando el método es password',
+      })
     }
-  }
-  return { success: true }
-}, { message: 'Código o contraseña requerida según el método' })
+  })
 
-export const CreatePasswordSchema = z.object({
+const passwordBase = z.object({
   email: z.string().email('Email inválido'),
-  password: z.string()
-    .min(8, 'La contraseña debe tener al menos 8 caracteres')
-    .refine((val, ctx) => {
-      if (val.toLowerCase().includes(ctx.parent.email?.toLowerCase())) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: 'La contraseña no debe ser similar al email',
-        })
-      }
-    }),
+  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
   confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: 'Las contraseñas no coinciden',
+})
+
+export const CreatePasswordSchema = passwordBase.superRefine((data, ctx) => {
+  const emailLocalPart = data.email.split('@')[0]?.toLowerCase() ?? ''
+  if (emailLocalPart && data.password.toLowerCase().includes(emailLocalPart)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['password'],
+      message: 'La contraseña no debe ser similar al email',
+    })
+  }
+  if (data.password !== data.confirmPassword) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['confirmPassword'],
+      message: 'Las contraseñas no coinciden',
+    })
+  }
 })
 
 export const NicknameSchema = z.object({

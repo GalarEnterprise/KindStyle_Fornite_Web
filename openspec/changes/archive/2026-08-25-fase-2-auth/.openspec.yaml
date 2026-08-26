@@ -1,7 +1,7 @@
 name: fase-2-auth
 schema: spec-driven
 created: 2026-08-24
-status: proposed
+status: completed
 
 description: |
   Implementar el sistema de autenticación completo: registro y login por email con código de verificación,

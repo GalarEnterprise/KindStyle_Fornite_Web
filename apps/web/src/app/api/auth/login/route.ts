@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!result.success) {
+    if (!result.success || !('tokens' in result) || !result.tokens) {
       return NextResponse.json(result, { status: 400 })
     }
 
