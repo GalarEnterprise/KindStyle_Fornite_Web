@@ -1,7 +1,7 @@
 name: fase-4-requests
 schema: spec-driven
 created: 2026-08-25
-status: proposed
+status: completed
 
 description: |
   Implementar el sistema de solicitudes de compra: generación de Request desde el carrito

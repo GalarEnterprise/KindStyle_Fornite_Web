@@ -402,7 +402,7 @@ enum FriendshipRequestStatus {
 
 model FriendshipRequest {
   id                String                  @id @default(uuid())
-  request_id        String                  @unique
+  request_id        String?                 @unique
   user_id           String
   platform          Platform
   platform_user_id  String

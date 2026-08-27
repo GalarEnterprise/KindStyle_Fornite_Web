@@ -2,7 +2,47 @@
 
 import Link from 'next/link'
 import { useAuth } from '@/hooks/use-auth'
+import { useFriendship } from '@/hooks/use-friendship'
 import { CartBadge } from '@/components/cart/cart-badge'
+
+export function BotsCta() {
+  const { isAuthenticated, isAdmin } = useAuth()
+  const { panel, isLoading } = useFriendship()
+
+  if (!isAuthenticated || isAdmin) return null
+  if (isLoading) return null
+
+  if (!panel) {
+    return (
+      <Link
+        href="/account/bots"
+        className="animate-pulse rounded-md bg-purple-600/90 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-purple-500"
+      >
+        AGREGAR BOTS ✨
+      </Link>
+    )
+  }
+
+  if (panel.status === 'READY') {
+    return (
+      <Link
+        href="/account/bots"
+        className="rounded-md px-3 py-1.5 text-sm font-medium text-green-400 transition hover:bg-gray-800"
+      >
+        BOTS ✓
+      </Link>
+    )
+  }
+
+  return (
+    <Link
+      href="/account/bots"
+      className="rounded-md px-3 py-1.5 text-sm font-medium text-yellow-400 transition hover:bg-gray-800"
+    >
+      BOTS 🟡
+    </Link>
+  )
+}
 
 export function Header() {
   const { user, isAuthenticated, isAdmin, logout } = useAuth()
@@ -23,6 +63,8 @@ export function Header() {
           </Link>
 
           <CartBadge />
+
+          <BotsCta />
 
           {isAuthenticated ? (
             <>

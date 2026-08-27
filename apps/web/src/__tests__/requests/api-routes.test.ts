@@ -23,7 +23,10 @@ import { GET as listRequests, POST as createRequest } from '@/app/api/requests/r
 const mockGetAuthUser = vi.mocked(getAuthUser)
 
 function makeRequest(init?: RequestInit) {
-  return new NextRequest('http://localhost:3000/api/requests', init)
+  return new NextRequest('http://localhost:3000/api/requests', {
+    ...init,
+    signal: init?.signal ?? undefined,
+  })
 }
 
 beforeEach(() => {
