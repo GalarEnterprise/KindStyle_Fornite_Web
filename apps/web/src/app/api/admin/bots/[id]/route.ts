@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { requireAdminApi } from '@/lib/auth/admin-guard'
 import { updateBot } from '@/lib/services/bot/bot-service'
 
-export async function PATCH(
+async function handleUpdate(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -38,3 +38,6 @@ export async function PATCH(
     )
   }
 }
+
+export const PATCH = handleUpdate
+export const PUT = handleUpdate

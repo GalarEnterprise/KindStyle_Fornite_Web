@@ -306,15 +306,31 @@ export async function listAdminQueue() {
   const requests = await db.friendshipRequest.findMany({
     where: { status: { notIn: ['CANCELLED'] } },
     include: {
-      user: { select: { nickname: true } },
-      bots: { select: { request_status: true, friendship_status: true } },
+      user: { select: { id: true, email: true, nickname: true } },
+      bots: {
+        include: {
+          fulfillment_account: { select: { id: true, name: true } },
+        },
+      },
     },
   })
 
   return requests.sort((a, b) => {
-    const aPending = a.bots.some((bot) => bot.request_status === 'PENDING') ? 0 : 1
-    const bPending = b.bots.some((bot) => bot.request_status === 'PENDING') ? 0 : 1
-    if (aPending !== bPending) return aPending - bPending
+    const aEarliestEligibility = a.bots
+      .filter((bot) => bot.eligibility_at)
+      .sort((x, y) => (x.eligibility_at?.getTime() ?? Infinity) - (y.eligibility_at?.getTime() ?? Infinity))[0]
+      ?.eligibility_at
+    const bEarliestEligibility = b.bots
+      .filter((bot) => bot.eligibility_at)
+      .sort((x, y) => (x.eligibility_at?.getTime() ?? Infinity) - (y.eligibility_at?.getTime() ?? Infinity))[0]
+      ?.eligibility_at
+
+    if (aEarliestEligibility && bEarliestEligibility) {
+      return aEarliestEligibility.getTime() - bEarliestEligibility.getTime()
+    }
+    if (aEarliestEligibility) return -1
+    if (bEarliestEligibility) return 1
+
     return a.created_at.getTime() - b.created_at.getTime()
   })
 }

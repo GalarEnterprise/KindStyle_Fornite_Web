@@ -507,6 +507,12 @@ model CurrencySetting {
   updated_at       DateTime @updatedAt
 }
 
+model SystemSetting {
+  key        String   @id
+  value      String
+  updated_at DateTime @updatedAt
+}
+
 // ==========================================
 // EVENT LOG / AUDIT
 // ==========================================

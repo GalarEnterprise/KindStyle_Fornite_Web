@@ -27,6 +27,23 @@ const ALLOWED_TRANSITIONS: Record<string, string[]> = {
 export async function listBots() {
   return db.fulfillmentAccount.findMany({
     orderBy: [{ status: 'asc' }, { name: 'asc' }],
+    include: {
+      friendship_bots: {
+        where: { friendship_status: { notIn: ['REJECTED'] as const } },
+        select: {
+          id: true,
+          friendship_status: true,
+          request_status: true,
+          eligibility_at: true,
+          friendship_request: {
+            select: {
+              id: true,
+              user: { select: { id: true, email: true, nickname: true } },
+            },
+          },
+        },
+      },
+    },
   })
 }
 

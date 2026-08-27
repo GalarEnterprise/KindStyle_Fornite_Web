@@ -1,41 +1,7 @@
-# Panel de Administración
-
-## Purpose
-
-Proporcionar a los administradores una interfaz centralizada para gestionar solicitudes, pagos, amistades, bots, configuración, usuarios y auditoría del sistema.
-
-## Rutas
-
-- `/admin/dashboard` - Métricas generales
-- `/admin/requests` - Solicitudes de productos
-- `/admin/friendships` - Cola de amistades
-- `/admin/bots` - Gestión de bots
-- `/admin/payments` - Validación de pagos
-- `/admin/settings` - Configuración
-- `/admin/users` - Gestión de admins (solo Super Admin)
-- `/admin/audit` - Registro de auditoría
-
-## Roles
-
-### Super Admin
-- Todo lo que puede hacer Admin
-- Crear/eliminar admins
-- Quitar acceso a admins
-- Configuración global
-- Ver credenciales de usuarios (después de validar pago)
-
-### Admin
-- Operar pedidos
-- Gestionar amistades
-- Validar pagos
-- Ver métricas
-- Gestionar bots
-- Configurar precios
-
 ## ADDED Requirements
 
 ### Requirement: Admin Dashboard Metrics
-El sistema DEBE mostrar un panel con métricas clave de negocio para el admin.
+The system SHALL display a dashboard with key business metrics for the admin.
 
 #### Scenario: View dashboard
 - **WHEN** admin navigates to `/admin/dashboard`
@@ -46,7 +12,7 @@ El sistema DEBE mostrar un panel con métricas clave de negocio para el admin.
 - **THEN** metrics reflect current database state without requiring page refresh
 
 ### Requirement: Admin Requests Panel
-El sistema DEBE proporcionar un panel para ver y gestionar todas las solicitudes de clientes.
+The system SHALL provide a panel to view and manage all customer requests.
 
 #### Scenario: View requests list
 - **WHEN** admin navigates to `/admin/requests`
@@ -65,7 +31,7 @@ El sistema DEBE proporcionar un panel para ver y gestionar todas las solicitudes
 - **THEN** system copies the request number to clipboard
 
 ### Requirement: Admin Friendships Panel
-El sistema DEBE proporcionar un panel para gestionar solicitudes de amistad con orden de prioridad.
+The system SHALL provide a panel to manage friendship requests with priority ordering.
 
 #### Scenario: View friendships queue
 - **WHEN** admin navigates to `/admin/friendships`
@@ -88,7 +54,7 @@ El sistema DEBE proporcionar un panel para gestionar solicitudes de amistad con 
 - **THEN** system updates bot friendship_status to `ACCEPTED`, sets `friendship_confirmed_at`, starts timer, and logs the action
 
 ### Requirement: Admin Bots Panel
-El sistema DEBE proporcionar un panel para gestionar cuentas de cumplimiento.
+The system SHALL provide a panel to manage fulfillment bots.
 
 #### Scenario: View bots list
 - **WHEN** admin navigates to `/admin/bots`
@@ -107,7 +73,7 @@ El sistema DEBE proporcionar un panel para gestionar cuentas de cumplimiento.
 - **THEN** system sets bot status to `INACTIVE` and logs the action
 
 ### Requirement: Admin Settings Panel
-El sistema DEBE proporcionar un panel de configuración para ajustes globales.
+The system SHALL provide a settings panel for global configuration.
 
 #### Scenario: View settings
 - **WHEN** admin navigates to `/admin/settings`
@@ -126,7 +92,7 @@ El sistema DEBE proporcionar un panel de configuración para ajustes globales.
 - **THEN** system triggers catalog synchronization and displays last sync timestamp
 
 ### Requirement: Admin Users Panel
-El sistema DEBE proporcionar un panel de gestión de usuarios restringido a Super Admin.
+The system SHALL provide a user management panel restricted to Super Admin.
 
 #### Scenario: Super Admin views admin list
 - **WHEN** Super Admin navigates to `/admin/users`
@@ -145,7 +111,7 @@ El sistema DEBE proporcionar un panel de gestión de usuarios restringido a Supe
 - **THEN** system redirects to dashboard
 
 ### Requirement: Admin Audit Log
-El sistema DEBE registrar todas las acciones de admin y proporcionar un registro de auditoría consultable.
+The system SHALL log all admin actions and provide a queryable audit trail.
 
 #### Scenario: Log admin action
 - **WHEN** admin performs any action (validate payment, confirm friendship, etc.)
@@ -158,52 +124,3 @@ El sistema DEBE registrar todas las acciones de admin y proporcionar un registro
 #### Scenario: Filter audit log
 - **WHEN** admin selects entity or action filter
 - **THEN** system displays only matching log entries
-
-## Payments Panel
-
-Ruta: `/admin/payments`
-
-- Lista de pagos pendientes
-- Ver comprobante (descargar)
-- Validar / Rechazar
-- Agregar nota al rechazar
-- Ver historial
-
-### Acciones sobre pago
-```
-[ VALIDAR PAGO ] → Estado: PAID
-[ RECHAZAR ] → Modal para motivo + nota → Estado: REJECTED
-[ DESCARGAR COMPROBANTE ]
-```
-
-Al rechazar:
-- Notificar cliente con motivo
-- Cliente puede volver a subir comprobante
-
-## Settings Panel
-
-Ruta: `/admin/settings`
-
-### Configuración General
-- Moneda predeterminada
-- Ratio V-Bucks (100 V = 7.5 MXN default)
-- Período de amistad (48h default, configurable)
-- WhatsApp número
-- Email contacto
-
-### Gestión de Precios
-- Precio por producto individual
-- Precios de V-Bucks (1000, 2800, 5000, 13500)
-- Precios de Crew/Battle Pass
-
-### Sincronización
-- Forzar sync de catálogo
-- Ver último snapshot
-- Configurar intervalo de sync
-
-## Credenciales Especiales
-
-Para V-Bucks/Crew/Battle Pass:
-- Admin NO puede ver credenciales hasta validar pago
-- Después de validar: puede ver email + contraseña
-- Antes de validar: solo ve que existen credenciales encriptadas
