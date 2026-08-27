@@ -8,6 +8,7 @@ export interface FriendshipBot {
   friendship_status: string
   bot_name: string
   bot_platform: string
+  eligibility_at: Date | null
 }
 
 export interface FriendshipPanel {

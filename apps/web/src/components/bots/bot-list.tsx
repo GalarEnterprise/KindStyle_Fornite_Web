@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { FriendshipPanel } from '@/hooks/use-friendship'
+import { CountdownTimer } from './countdown-timer'
 
 const PLATFORM_SHORT: Record<string, string> = {
   EPIC: 'Epic',
@@ -9,14 +10,14 @@ const PLATFORM_SHORT: Record<string, string> = {
   PLAYSTATION: 'PSN',
 }
 
-function botState(bot: { request_status: string; friendship_status: string }) {
+function botState(bot: { request_status: string; friendship_status: string; eligibility_at: Date | null }) {
   if (bot.friendship_status === 'ACCEPTED') {
-    return { label: 'Amigo', color: 'text-green-400', dot: '🟢' }
+    return { label: 'Amigo', color: 'text-green-400', dot: '🟢', showTimer: true }
   }
   if (bot.request_status === 'REQUEST_SENT') {
-    return { label: 'Solicitud enviada', color: 'text-yellow-400', dot: '🟡' }
+    return { label: 'Solicitud enviada', color: 'text-yellow-400', dot: '🟡', showTimer: false }
   }
-  return { label: 'No agregado', color: 'text-gray-500', dot: '⚪' }
+  return { label: 'No agregado', color: 'text-gray-500', dot: '⚪', showTimer: false }
 }
 
 export function BotList({ panel, onChanged }: { panel: FriendshipPanel; onChanged: () => void }) {
@@ -69,9 +70,14 @@ export function BotList({ panel, onChanged }: { panel: FriendshipPanel; onChange
                   — {PLATFORM_SHORT[bot.bot_platform] ?? bot.bot_platform}
                 </span>
               </div>
-              <span className={`text-sm font-medium ${state.color}`}>
-                {state.dot} {state.label}
-              </span>
+              <div className="flex flex-col items-end">
+                <span className={`text-sm font-medium ${state.color}`}>
+                  {state.dot} {state.label}
+                </span>
+                {state.showTimer && (
+                  <CountdownTimer eligibilityAt={bot.eligibility_at} />
+                )}
+              </div>
             </div>
           )
         })}

@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client'
 import { db } from '@/lib/db/client'
 import { buildRequestMessage, buildWhatsappUrl, type RequestMessageData } from '@/lib/services/requests/message-service'
+import { createPayment } from '@/lib/services/payment/payment-service'
 
 const DEFAULT_VBUCKS_RATE = 7.5
 const MAX_NUMBER_RETRIES = 5
@@ -151,6 +152,12 @@ export async function createRequestFromCart(userId: string) {
         success: false as const,
         error: { code: 'INTERNAL_ERROR', message: 'Error al recuperar la solicitud creada' },
       }
+    }
+
+    try {
+      await createPayment(userId, result.id, 'TRANSFER')
+    } catch (error) {
+      console.error('[request-service.createRequestFromCart] Error creating payment:', error)
     }
 
     return { success: true as const, data: detail }

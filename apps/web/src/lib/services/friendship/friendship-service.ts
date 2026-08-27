@@ -1,6 +1,7 @@
 import { Prisma, type FriendshipRequestBot, type FriendshipRequestStatus } from '@prisma/client'
 import { db } from '@/lib/db/client'
 import { RegisterPlatformSchema } from '@/lib/validators/bots'
+import { startTimer } from '@/lib/services/timer/timer-service'
 
 const DEFAULT_REQUIRED_BOTS = 1
 
@@ -165,6 +166,7 @@ export async function getFriendshipPanel(userId: string) {
       friendship_status: b.friendship_status,
       bot_name: b.fulfillment_account.name,
       bot_platform: b.fulfillment_account.platform,
+      eligibility_at: b.eligibility_at,
     })),
   }
 }
@@ -269,6 +271,20 @@ export async function confirmFriendship(adminId: string, botRowId: string): Prom
   ])
 
   await recalculateStatus(row.friendship_request_id)
+
+  try {
+    const friendshipRequest = await db.friendshipRequest.findUnique({
+      where: { id: row.friendship_request_id },
+      select: { user_id: true },
+    })
+
+    if (friendshipRequest) {
+      await startTimer(botRowId, row.friendship_request_id, friendshipRequest.user_id)
+    }
+  } catch (error) {
+    console.error('[FriendshipService] Error starting timer:', error)
+  }
+
   return { success: true, data: { alreadyConfirmed: false } }
 }
 
