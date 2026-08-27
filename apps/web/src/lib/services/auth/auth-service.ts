@@ -88,6 +88,10 @@ export async function createUser(email: string) {
     },
   })
 
+  await db.notificationPreference.create({
+    data: { user_id: user.id },
+  })
+
   return user
 }
 

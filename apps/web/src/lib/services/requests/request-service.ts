@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client'
 import { db } from '@/lib/db/client'
 import { buildRequestMessage, buildWhatsappUrl, type RequestMessageData } from '@/lib/services/requests/message-service'
 import { createPayment } from '@/lib/services/payment/payment-service'
+import { sendToAdmin } from '@/lib/services/notification/notification-service'
 
 const DEFAULT_VBUCKS_RATE = 7.5
 const MAX_NUMBER_RETRIES = 5
@@ -158,6 +159,22 @@ export async function createRequestFromCart(userId: string) {
       await createPayment(userId, result.id, 'TRANSFER')
     } catch (error) {
       console.error('[request-service.createRequestFromCart] Error creating payment:', error)
+    }
+
+    try {
+      const user = await db.user.findUnique({ where: { id: userId }, select: { email: true } })
+      await sendToAdmin({
+        event: 'NEW_ORDER',
+        title: 'Nuevo pedido',
+        message: `Nuevo pedido ${result.request_number} de ${user?.email ?? 'cliente'}`,
+        metadata: {
+          request_number: result.request_number,
+          user_email: user?.email,
+          total_mxn: result.total_mxn.toString(),
+        },
+      })
+    } catch (error) {
+      console.error('[request-service.createRequestFromCart] Error sending admin notification:', error)
     }
 
     return { success: true as const, data: detail }

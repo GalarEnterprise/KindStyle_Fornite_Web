@@ -1,5 +1,6 @@
 import { Prisma, type PaymentMethod, type PaymentStatus } from '@prisma/client'
 import { db } from '@/lib/db/client'
+import { send, sendToAdmin } from '@/lib/services/notification/notification-service'
 
 export interface ServiceError {
   code: string
@@ -118,17 +119,24 @@ export async function uploadReceipt(
     },
   })
 
-  await db.notification.create({
-    data: {
-      user_id: userId,
-      type: 'RECEIPT_UPLOADED',
-      channel: 'WEB',
-      title: 'Comprobante recibido',
-      message: 'Comprobante recibido. Validación en proceso.',
-      metadata: {
-        payment_id: paymentId,
-      } as Prisma.InputJsonValue,
-    },
+  await send({
+    userId,
+    event: 'RECEIPT_UPLOADED',
+    title: 'Comprobante recibido',
+    message: 'Comprobante recibido. Validación en proceso.',
+    metadata: { payment_id: paymentId },
+  })
+
+  const request = await db.request.findUnique({
+    where: { id: payment.request_id },
+    select: { request_number: true },
+  })
+
+  await sendToAdmin({
+    event: 'RECEIPT_UPLOADED_ADMIN',
+    title: 'Comprobante subido',
+    message: `Comprobante subido para solicitud ${request?.request_number ?? 'N/A'}`,
+    metadata: { payment_id: paymentId, request_number: request?.request_number },
   })
 
   return { success: true, data: { receiptUrl: `/${filePath}` } }
@@ -172,17 +180,15 @@ export async function validatePayment(
     },
   })
 
-  await db.notification.create({
-    data: {
-      user_id: payment.user_id,
-      type: 'PAYMENT_VALIDATED',
-      channel: 'WEB',
-      title: 'Pago confirmado',
-      message: `Pago de $${payment.amount} MXN confirmado para solicitud ${payment.request.request_number}`,
-      metadata: {
-        payment_id: paymentId,
-        amount: payment.amount.toString(),
-      } as Prisma.InputJsonValue,
+  await send({
+    userId: payment.user_id,
+    event: 'PAYMENT_VALIDATED',
+    title: 'Pago confirmado',
+    message: `Pago de $${payment.amount} MXN confirmado para solicitud ${payment.request.request_number}`,
+    metadata: {
+      payment_id: paymentId,
+      amount: payment.amount.toString(),
+      request_number: payment.request.request_number,
     },
   })
 
@@ -230,17 +236,14 @@ export async function rejectPayment(
     },
   })
 
-  await db.notification.create({
-    data: {
-      user_id: payment.user_id,
-      type: 'PAYMENT_REJECTED',
-      channel: 'WEB',
-      title: 'Pago no válido',
-      message: `Pago rechazado: ${reason}`,
-      metadata: {
-        payment_id: paymentId,
-        reason,
-      } as Prisma.InputJsonValue,
+  await send({
+    userId: payment.user_id,
+    event: 'PAYMENT_REJECTED',
+    title: 'Pago no válido',
+    message: `Pago rechazado: ${reason}`,
+    metadata: {
+      payment_id: paymentId,
+      reason,
     },
   })
 

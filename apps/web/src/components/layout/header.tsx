@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useAuth } from '@/hooks/use-auth'
 import { useFriendship } from '@/hooks/use-friendship'
 import { CartBadge } from '@/components/cart/cart-badge'
+import { NotificationBell } from '@/components/notifications/notification-bell'
 
 export function BotsCta() {
   const { isAuthenticated, isAdmin } = useAuth()
@@ -63,6 +64,8 @@ export function Header() {
           </Link>
 
           <CartBadge />
+
+          {isAuthenticated && <NotificationBell />}
 
           <BotsCta />
 

@@ -1,6 +1,7 @@
 import { Queue } from 'bullmq'
 import { Prisma } from '@prisma/client'
 import { db } from '@/lib/db/client'
+import { send } from '@/lib/services/notification/notification-service'
 import {
   calculateEligibilityAt,
   getTimerJobKey,
@@ -96,17 +97,14 @@ export async function startTimer(
     },
   })
 
-  await db.notification.create({
-    data: {
-      user_id: userId,
-      type: 'TIMER_STARTED',
-      channel: 'WEB',
-      title: 'Bot preparado',
-      message: `Bot ${row.fulfillment_account.name} preparado. Período de espera iniciado.`,
-      metadata: {
-        bot_name: row.fulfillment_account.name,
-        eligibility_at: eligibilityAt.toISOString(),
-      } as Prisma.InputJsonValue,
+  await send({
+    userId,
+    event: 'TIMER_STARTED',
+    title: 'Bot preparado',
+    message: `Bot ${row.fulfillment_account.name} preparado. Período de espera iniciado.`,
+    metadata: {
+      bot_name: row.fulfillment_account.name,
+      eligibility_at: eligibilityAt.toISOString(),
     },
   })
 

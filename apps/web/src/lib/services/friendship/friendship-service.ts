@@ -2,6 +2,7 @@ import { Prisma, type FriendshipRequestBot, type FriendshipRequestStatus } from 
 import { db } from '@/lib/db/client'
 import { RegisterPlatformSchema } from '@/lib/validators/bots'
 import { startTimer } from '@/lib/services/timer/timer-service'
+import { send } from '@/lib/services/notification/notification-service'
 
 const DEFAULT_REQUIRED_BOTS = 1
 
@@ -279,6 +280,19 @@ export async function confirmFriendship(adminId: string, botRowId: string): Prom
     })
 
     if (friendshipRequest) {
+      const bot = await db.fulfillmentAccount.findUnique({
+        where: { id: row.fulfillment_account_id },
+        select: { name: true },
+      })
+
+      await send({
+        userId: friendshipRequest.user_id,
+        event: 'FRIENDSHIP_CONFIRMED',
+        title: 'Amistad confirmada',
+        message: `Tu amistad con ${bot?.name ?? 'Bot'} ha sido confirmada.`,
+        metadata: { bot_name: bot?.name },
+      })
+
       await startTimer(botRowId, row.friendship_request_id, friendshipRequest.user_id)
     }
   } catch (error) {
