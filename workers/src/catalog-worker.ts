@@ -32,6 +32,9 @@ interface FortniteShopEntry {
   colors: Record<string, string> | null
   items: FortniteShopItem[]
   granted: unknown[]
+  layout?: { id: string; name: string }
+  offerId?: string
+  bundle?: { name: string; info: string; image: string }
   newDisplayAsset?: {
     id: string
     materialInstances: Array<{ images: Record<string, string> }>
@@ -201,6 +204,9 @@ async function syncCatalog(): Promise<void> {
       iconUrl: string | null
       featuredImageUrl: string | null
       giftable: string
+      section: string | null
+      offerId: string | null
+      bundleInfo: { name: string; info: string; image: string } | null
     }> = []
 
     for (const entry of shopResponse.data.entries) {
@@ -208,6 +214,9 @@ async function syncCatalog(): Promise<void> {
 
       const isBundle = entry.items.length > 1
       const primaryItem = entry.items[0]
+      const section = entry.layout?.name || null
+      const offerId = entry.offerId || null
+      const bundleInfo = entry.bundle || null
 
       if (isBundle) {
         const productType = 'BUNDLE'
@@ -224,6 +233,9 @@ async function syncCatalog(): Promise<void> {
           iconUrl: primaryItem.images?.icon || null,
           featuredImageUrl: primaryItem.images?.featured || null,
           giftable: resolveGiftability(productType),
+          section,
+          offerId,
+          bundleInfo,
         })
       } else {
         for (const item of entry.items) {
@@ -241,6 +253,9 @@ async function syncCatalog(): Promise<void> {
             iconUrl: item.images?.icon || null,
             featuredImageUrl: item.images?.featured || null,
             giftable: resolveGiftability(productType),
+            section,
+            offerId,
+            bundleInfo,
           })
         }
       }
@@ -337,7 +352,9 @@ async function syncCatalog(): Promise<void> {
               product_id: productId,
               price_vbucks: product.priceVbucks,
               display_order: displayOrder++,
-              section: null,
+              section: product.section,
+              offer_id: product.offerId,
+              bundle_info: product.bundleInfo || undefined,
               featured: displayOrder <= 5,
             },
           })

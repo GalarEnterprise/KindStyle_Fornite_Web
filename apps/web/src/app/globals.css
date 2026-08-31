@@ -7,7 +7,24 @@
   --background: 3, 7, 18;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   color: rgb(var(--foreground));
   background: rgb(var(--background));
+}
+
+.shop-section {
+  scroll-margin-top: 80px;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

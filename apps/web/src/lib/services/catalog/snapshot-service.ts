@@ -86,6 +86,10 @@ export async function createSnapshot(
         return entry.items.some((item) => item.id === p.fortniteProductId)
       })
 
+      const section = (entry as any).layout?.name || null
+      const offerId = (entry as any).offerId || null
+      const bundleInfo = (entry as any).bundle || null
+
       for (const product of productsForEntry) {
         const dbProduct = await tx.product.findFirst({
           where: { fortnite_product_id: product.fortniteProductId },
@@ -98,7 +102,9 @@ export async function createSnapshot(
               product_id: dbProduct.id,
               price_vbucks: product.priceVbucks,
               display_order: displayOrder++,
-              section: null,
+              section,
+              offer_id: offerId,
+              bundle_info: bundleInfo || undefined,
               featured: entryIndex === 0,
             },
           })

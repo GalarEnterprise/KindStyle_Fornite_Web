@@ -1,41 +1,14 @@
 import { getLatestSnapshot } from '@/lib/services/catalog/snapshot-service'
-import { getCollections } from '@/lib/services/catalog/collection-service'
-import { CollectionSection } from '@/components/shop/collection-section'
+import { buildShopDisplayModel } from '@/lib/services/catalog/display-model'
+import { SectionSidebar } from '@/components/shop/section-sidebar'
+import { BundleCard } from '@/components/shop/bundle-card'
+import { ProductCard } from '@/components/shop/product-card'
 import { LastUpdateBadge } from '@/components/shop/last-update-badge'
 import { ProductGridSkeleton } from '@/components/shop/product-grid'
 
 export default async function ShopPage() {
   const snapshot = await getLatestSnapshot()
-  const collections = await getCollections()
-
   const vbucksRate = 7.5
-
-  const collectionData = collections.map((collection) => {
-    const items = snapshot?.shop_items
-      .filter((item) => {
-        if (!item.product.active || !item.product.visible) return false
-        if (collection.type === 'section') {
-          return item.section === collection.name
-        }
-        return !item.section && item.product.type === collection.name
-      })
-      .map((item) => ({
-        id: item.product.id,
-        name: item.product.name,
-        priceVbucks: item.product.price_vbucks,
-        priceMxn: Number(item.product.price_vbucks) * (vbucksRate / 100),
-        imageUrl: item.product.image_url,
-        iconUrl: item.product.icon_url,
-        rarity: item.product.rarity,
-        type: item.product.type,
-        visible: item.product.visible,
-      })) || []
-
-    return {
-      ...collection,
-      items,
-    }
-  })
 
   if (!snapshot) {
     return (
@@ -52,6 +25,18 @@ export default async function ShopPage() {
       </div>
     )
   }
+
+  const activeItems = snapshot.shop_items.filter(
+    (item) => item.product.active && item.product.visible
+  )
+
+  const displaySections = buildShopDisplayModel(activeItems)
+
+  const sections = displaySections.map((s) => ({
+    id: s.id,
+    title: s.title,
+    slug: s.slug,
+  }))
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -71,19 +56,62 @@ export default async function ShopPage() {
           <LastUpdateBadge lastUpdated={snapshot.fetched_at.toISOString()} />
         </div>
 
-        {collectionData.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-gray-400 text-lg">No hay productos disponibles en la tienda de hoy.</p>
-          </div>
-        ) : (
-          collectionData.map((collection) => (
-            <CollectionSection
-              key={collection.slug}
-              title={collection.name}
-              products={collection.items}
-            />
-          ))
-        )}
+        <SectionSidebar sections={sections} />
+
+        <div className="lg:ml-56">
+          {displaySections.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-gray-400 text-lg">No hay productos disponibles en la tienda de hoy.</p>
+            </div>
+          ) : (
+            displaySections.map((section) => (
+              <section
+                key={section.id}
+                id={`section-${section.slug}`}
+                className="mb-8 shop-section"
+              >
+                <h2 className="mb-4 text-xl font-bold text-white flex items-center gap-2">
+                  <span className="h-5 w-1 rounded-full bg-purple-500" />
+                  {section.title}
+                  <span className="text-sm font-normal text-gray-400">
+                    ({section.entries.length})
+                  </span>
+                </h2>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {section.entries.map((entry) => {
+                    if (entry.type === 'bundle') {
+                      return (
+                        <BundleCard
+                          key={entry.id}
+                          name={entry.name}
+                          imageUrl={entry.imageUrl}
+                          priceVbucks={entry.priceVbucks}
+                          components={entry.components}
+                        />
+                      )
+                    }
+
+                    return (
+                      <ProductCard
+                        key={entry.id}
+                        productId={entry.product.id}
+                        name={entry.product.name}
+                        priceVbucks={entry.product.price_vbucks}
+                        priceMxn={Number(entry.product.price_vbucks) * (vbucksRate / 100)}
+                        imageUrl={entry.product.image_url}
+                        iconUrl={entry.product.icon_url}
+                        rarity={entry.product.rarity}
+                        type={entry.product.type}
+                        visible={entry.product.visible}
+                      />
+                    )
+                  })}
+                </div>
+              </section>
+            ))
+          )}
+        </div>
       </div>
     </div>
   )

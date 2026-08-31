@@ -28,6 +28,7 @@ interface FortniteShopEntry {
   giftable: boolean
   refundable: boolean
   layout?: { id: string; name: string }
+  bundle?: { name: string; info: string; image: string }
   brItems?: BrItem[]
   tracks?: unknown[]
 }
@@ -208,6 +209,8 @@ async function syncCatalog() {
           price_vbucks: entry.finalPrice,
           display_order: itemCount,
           section: entry.layout?.name || null,
+          offer_id: entry.offerId || null,
+          bundle_info: entry.bundle || null,
           featured: entry.layout?.name?.toLowerCase().includes('featured') || false,
         },
       })

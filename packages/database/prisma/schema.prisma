@@ -219,6 +219,8 @@ model ShopItem {
   price_vbucks     Int
   display_order    Int      @default(0)
   section          String?
+  offer_id         String?
+  bundle_info      Json?
   featured         Boolean  @default(false)
   created_at       DateTime @default(now())
 
@@ -227,6 +229,7 @@ model ShopItem {
 
   @@index([shop_snapshot_id])
   @@index([product_id])
+  @@index([offer_id])
 }
 
 // ==========================================
