@@ -23,7 +23,8 @@
     "db:migrate": "npm run migrate --workspace=packages/database",
     "db:push": "npm run push --workspace=packages/database",
     "db:seed": "npm run seed --workspace=packages/database",
-    "db:studio": "npm run studio --workspace=packages/database"
+    "db:studio": "npm run studio --workspace=packages/database",
+    "sync:catalog": "npx tsx scripts/sync-catalog.ts"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",

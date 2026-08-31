@@ -140,7 +140,7 @@ export class FortniteApiClient {
       const response = await fetch(url.toString(), {
         method: 'GET',
         headers: {
-          'x-api-key': this.apiKey,
+          'Authorization': this.apiKey,
           'Accept': 'application/json',
         },
         signal: controller.signal,
