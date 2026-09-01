@@ -12,7 +12,7 @@ COPY packages/database/package.json ./packages/database/
 COPY packages/shared/package.json ./packages/shared/
 COPY workers/package.json ./workers/
 
-RUN npm ci --workspace=apps/web
+RUN npm ci
 
 # Stage 2: Build
 FROM node:20 AS builder
@@ -36,9 +36,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-COPY --from=builder /app/apps/web/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+RUN mkdir -p public && chown nextjs:nodejs public
 
 USER nextjs
 
