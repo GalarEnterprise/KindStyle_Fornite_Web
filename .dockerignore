@@ -49,8 +49,5 @@ __tests__
 *.spec.tsx
 coverage/
 
-# Scripts (not needed in production)
-scripts/
-
 # OpenSpec
 .opencode/

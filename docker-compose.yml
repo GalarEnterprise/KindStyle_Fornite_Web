@@ -106,7 +106,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    entrypoint: ["sh", "-c", "echo 'Migrations ready'"]
 
 volumes:
   postgres_data:
