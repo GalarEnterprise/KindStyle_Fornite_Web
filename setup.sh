@@ -44,35 +44,19 @@ done
 
 echo ""
 echo "🏗️  Building builder image (with Prisma, tsx, etc)..."
-docker build --target builder -t kindstyle-builder .
-
-NETWORK=$(docker compose ls --format json | grep -o '"kindstyle_tienda_fornite_default"' || echo "kindstyle_tienda_fornite_default")
+docker compose build migrate
 
 echo ""
 echo "🗄️  Running database migrations..."
-docker run --rm \
-  --network kindstyle_tienda_fornite_default \
-  -e DATABASE_URL=postgresql://kindstyle:kindstyle_dev@postgres:5432/kindstyle_dev \
-  -e FORTNITE_API_KEY=${FORTNITE_API_KEY:-} \
-  kindstyle-builder \
-  sh -c "./node_modules/.bin/prisma db push --schema=packages/database/prisma/schema.prisma --accept-data-loss"
-
-echo ""
-echo "🌱 Seeding database..."
-docker run --rm \
-  --network kindstyle_tienda_fornite_default \
-  -e DATABASE_URL=postgresql://kindstyle:kindstyle_dev@postgres:5432/kindstyle_dev \
-  kindstyle-builder \
-  sh -c "./node_modules/.bin/tsx packages/database/prisma/seed.ts"
-
-echo ""
-echo "🔄 Syncing catalog from Fortnite API..."
-docker run --rm \
-  --network kindstyle_tienda_fornite_default \
-  -e DATABASE_URL=postgresql://kindstyle:kindstyle_dev@postgres:5432/kindstyle_dev \
-  -e FORTNITE_API_KEY=${FORTNITE_API_KEY:-} \
-  kindstyle-builder \
-  sh -c "./node_modules/.bin/tsx scripts/sync-catalog.ts"
+docker compose run --rm migrate sh -c "\
+  ./node_modules/.bin/prisma db push --schema=packages/database/prisma/schema.prisma --accept-data-loss && \
+  echo '✅ Migrations done' && \
+  echo '🌱 Seeding database...' && \
+  ./node_modules/.bin/tsx packages/database/prisma/seed.ts && \
+  echo '✅ Seed done' && \
+  echo '🔄 Syncing catalog from Fortnite API...' && \
+  ./node_modules/.bin/tsx scripts/sync-catalog.ts && \
+  echo '✅ Catalog synced'"
 
 echo ""
 echo "🐳 Starting web and worker..."

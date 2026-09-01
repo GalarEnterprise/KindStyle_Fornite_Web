@@ -91,6 +91,23 @@ services:
       redis:
         condition: service_healthy
 
+  # ============================================
+  # Migrations & Seed (one-shot, run with: docker compose run --rm migrate)
+  # ============================================
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    restart: "no"
+    environment:
+      - DATABASE_URL=postgresql://kindstyle:kindstyle_dev@postgres:5432/kindstyle_dev
+      - FORTNITE_API_KEY=${FORTNITE_API_KEY:-your_fortnite_api_key}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["sh", "-c", "echo 'Migrations ready'"]
+
 volumes:
   postgres_data:
   redis_data:
