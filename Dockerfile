@@ -3,8 +3,7 @@
 # ============================================
 
 # Stage 1: Dependencies
-FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat
+FROM node:20 AS deps
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -16,13 +15,11 @@ COPY workers/package.json ./workers/
 RUN npm ci --workspace=apps/web
 
 # Stage 2: Build
-FROM node:20-alpine AS builder
+FROM node:20 AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
-COPY --from=deps /app/packages/database/node_modules ./packages/database/node_modules
-COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
 
 COPY . .
 
@@ -30,7 +27,7 @@ RUN npm run db:generate
 RUN npm run build:web
 
 # Stage 3: Production
-FROM node:20-alpine AS runner
+FROM node:20 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production

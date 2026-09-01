@@ -1,7 +1,7 @@
 import { Worker, Job } from 'bullmq'
+import IORedis from 'ioredis'
 import { Prisma } from '@prisma/client'
 import { getTimerJobKey, TIMER_QUEUE_NAME } from '@kindstyle/shared'
-import { recoverTimers } from '../../apps/web/src/lib/services/timer/timer-service'
 
 interface TimerJobData {
   botRowId: string
@@ -11,15 +11,15 @@ interface TimerJobData {
   eligibilityAt: string
 }
 
-const REDIS_CONNECTION = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379', 10),
-}
+const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379'
 
 export class TimerWorker {
   private worker: Worker | null = null
+  private redis: IORedis | null = null
 
   async start() {
+    this.redis = new IORedis(REDIS_URL, { maxRetriesPerRequest: null })
+
     this.worker = new Worker(
       TIMER_QUEUE_NAME,
       async (job: Job<TimerJobData>) => {
@@ -34,7 +34,7 @@ export class TimerWorker {
         }
       },
       {
-        connection: REDIS_CONNECTION,
+        connection: this.redis,
         concurrency: 5,
         lockDuration: 30000,
         lockRenewTime: 15000,
@@ -49,20 +49,7 @@ export class TimerWorker {
       console.error(`[TimerWorker] Job ${job?.id} failed:`, err.message)
     })
 
-    await this.recoverStaleTimers()
-
     console.log('[TimerWorker] Started')
-  }
-
-  private async recoverStaleTimers() {
-    try {
-      const recovered = await recoverTimers()
-      if (recovered > 0) {
-        console.log(`[TimerWorker] Recovered ${recovered} stale timers`)
-      }
-    } catch (error) {
-      console.error('[TimerWorker] Error recovering stale timers:', error)
-    }
   }
 
   async stop() {
@@ -70,62 +57,66 @@ export class TimerWorker {
       await this.worker.close()
       this.worker = null
     }
+    if (this.redis) {
+      this.redis.disconnect()
+      this.redis = null
+    }
     console.log('[TimerWorker] Stopped')
   }
 
   private async processTimerCompletion(data: TimerJobData) {
     const { botRowId, botName, friendshipRequestId, userId, eligibilityAt } = data
 
-    const db = this.getDbClient()
+    const { PrismaClient } = await import('@prisma/client')
+    const db = new PrismaClient()
 
-    const row = await db.friendshipRequestBot.findUnique({
-      where: { id: botRowId },
-    })
-
-    if (!row) {
-      console.warn(`[TimerWorker] Bot row ${botRowId} not found, skipping`)
-      return
-    }
-
-    if (row.eligibility_at && row.eligibility_at <= new Date()) {
-      await db.eventLog.create({
-        data: {
-          entity: 'FRIENDSHIP_REQUEST_BOT',
-          entity_id: botRowId,
-          event_type: 'BOT_TIMER_COMPLETED',
-          user_id: userId,
-          metadata: {
-            bot_name: botName,
-            eligibility_at: eligibilityAt,
-            completed_at: new Date().toISOString(),
-          } as Prisma.InputJsonValue,
-        },
+    try {
+      const row = await db.friendshipRequestBot.findUnique({
+        where: { id: botRowId },
       })
 
-      if (userId) {
-        await db.notification.create({
+      if (!row) {
+        console.warn(`[TimerWorker] Bot row ${botRowId} not found, skipping`)
+        return
+      }
+
+      if (row.eligibility_at && row.eligibility_at <= new Date()) {
+        await db.eventLog.create({
           data: {
+            entity: 'FRIENDSHIP_REQUEST_BOT',
+            entity_id: botRowId,
+            event_type: 'BOT_TIMER_COMPLETED',
             user_id: userId,
-            type: 'TIMER_COMPLETED',
-            channel: 'WEB',
-            title: 'Bot elegible',
-            message: `Bot ${botName} elegible para enviarte regalos.`,
             metadata: {
               bot_name: botName,
+              eligibility_at: eligibilityAt,
               completed_at: new Date().toISOString(),
             } as Prisma.InputJsonValue,
           },
         })
 
-        console.log(`[TimerWorker] Timer completed for bot ${botName}, user ${userId}`)
-      }
-    } else {
-      console.log(`[TimerWorker] Bot ${botName} already processed or not eligible yet`)
-    }
-  }
+        if (userId) {
+          await db.notification.create({
+            data: {
+              user_id: userId,
+              type: 'TIMER_COMPLETED',
+              channel: 'WEB',
+              title: 'Bot elegible',
+              message: `Bot ${botName} elegible para enviarte regalos.`,
+              metadata: {
+                bot_name: botName,
+                completed_at: new Date().toISOString(),
+              } as Prisma.InputJsonValue,
+            },
+          })
 
-  private getDbClient() {
-    const { PrismaClient } = require('@prisma/client')
-    return new PrismaClient()
+          console.log(`[TimerWorker] Timer completed for bot ${botName}, user ${userId}`)
+        }
+      } else {
+        console.log(`[TimerWorker] Bot ${botName} already processed or not eligible yet`)
+      }
+    } finally {
+      await db.$disconnect()
+    }
   }
 }

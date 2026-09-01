@@ -6,6 +6,8 @@ import { ProductCard } from '@/components/shop/product-card'
 import { LastUpdateBadge } from '@/components/shop/last-update-badge'
 import { ProductGridSkeleton } from '@/components/shop/product-grid'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ShopPage() {
   const snapshot = await getLatestSnapshot()
   const vbucksRate = 7.5

@@ -2,7 +2,7 @@
 # KindStyle Fortnite Store - Background Worker
 # ============================================
 
-FROM node:20-alpine AS builder
+FROM node:20 AS builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -16,9 +16,8 @@ RUN npm ci
 COPY . .
 
 RUN npm run db:generate
-RUN npm run build --workspace=workers
 
-FROM node:20-alpine AS runner
+FROM node:20 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
@@ -29,8 +28,9 @@ RUN adduser --system --uid 1001 worker
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/packages/database ./packages/database
 COPY --from=builder /app/packages/shared ./packages/shared
-COPY --from=builder /app/workers/dist ./workers/dist
+COPY --from=builder /app/workers ./workers
+COPY --from=builder /app/packages/database/prisma ./packages/database/prisma
 
 USER worker
 
-CMD ["node", "workers/dist/index.js"]
+CMD ["node", "--import", "tsx", "workers/src/index.ts"]
