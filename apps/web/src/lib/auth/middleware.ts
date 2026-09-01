@@ -92,7 +92,7 @@ export async function requireSuperAdmin(request: NextRequest) {
 }
 
 export async function getAuthUser(request: NextRequest) {
-  const { accessToken } = getAuthCookies(request)
+  const { accessToken, refreshToken } = getAuthCookies(request)
 
   if (!accessToken) {
     return null
@@ -101,6 +101,26 @@ export async function getAuthUser(request: NextRequest) {
   const payload = await verifyToken(accessToken)
   if (payload) {
     return payload
+  }
+
+  // Intentar refresh si hay refreshToken
+  if (refreshToken) {
+    try {
+      const res = await fetch(new URL('/api/auth/refresh', request.url).toString(), {
+        method: 'POST',
+        headers: {
+          Cookie: `refreshToken=${refreshToken}`,
+        },
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        if (data.success) {
+          const newPayload = await verifyToken(data.tokens.accessToken)
+          return newPayload
+        }
+      }
+    } catch {}
   }
 
   return null

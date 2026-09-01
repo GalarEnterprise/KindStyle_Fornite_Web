@@ -63,6 +63,7 @@ services:
       - MOCK_FORTNITE=${MOCK_FORTNITE:-false}
       - MOCK_FULFILLMENT=${MOCK_FULFILLMENT:-false}
       - MOCK_EMAIL=true
+      - ALLOW_HTTP_COOKIES=true
     depends_on:
       postgres:
         condition: service_healthy

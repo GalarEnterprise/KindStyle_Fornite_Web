@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/use-auth'
 
 export function LoginForm() {
   const [email, setEmail] = useState('')
@@ -11,6 +12,7 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const { refresh } = useAuth()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -30,6 +32,9 @@ export function LoginForm() {
         setError(data.error?.message || 'Error al iniciar sesión')
         return
       }
+
+      // Refrescar el estado del auth context antes de navegar
+      await refresh()
 
       if (data.user?.isFirstLogin) {
         router.push('/nickname')

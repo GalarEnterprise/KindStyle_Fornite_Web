@@ -3,13 +3,20 @@ import { NextRequest, NextResponse } from 'next/server'
 const ACCESS_TOKEN_COOKIE = 'accessToken'
 const REFRESH_TOKEN_COOKIE = 'refreshToken'
 const IS_PRODUCTION = process.env.NODE_ENV === 'production'
+const ALLOW_HTTP = process.env.ALLOW_HTTP_COOKIES === 'true'
+
+function isSecure(): boolean {
+  if (!IS_PRODUCTION) return false
+  if (ALLOW_HTTP) return false
+  return true
+}
 
 export function setAuthCookies(
   response: NextResponse,
   tokens: { accessToken: string; refreshToken: string },
   options?: { secure?: boolean }
 ) {
-  const secure = options?.secure ?? IS_PRODUCTION
+  const secure = options?.secure ?? isSecure()
 
   response.cookies.set(ACCESS_TOKEN_COOKIE, tokens.accessToken, {
     httpOnly: true,
@@ -48,7 +55,7 @@ export function setAdminCookies(
   tokens: { accessToken: string; refreshToken: string },
   options?: { secure?: boolean }
 ) {
-  const secure = options?.secure ?? IS_PRODUCTION
+  const secure = options?.secure ?? isSecure()
 
   response.cookies.set('adminAccessToken', tokens.accessToken, {
     httpOnly: true,
