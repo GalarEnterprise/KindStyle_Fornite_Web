@@ -1,6 +1,9 @@
 version: '3.8'
 
 services:
+  # ============================================
+  # PostgreSQL Database
+  # ============================================
   postgres:
     image: postgres:15-alpine
     container_name: kindstyle-postgres
@@ -19,6 +22,9 @@ services:
       timeout: 5s
       retries: 5
 
+  # ============================================
+  # Redis (Cache + Queue)
+  # ============================================
   redis:
     image: redis:7-alpine
     container_name: kindstyle-redis
@@ -33,6 +39,63 @@ services:
       timeout: 5s
       retries: 5
 
+  # ============================================
+  # Next.js Web App
+  # ============================================
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: kindstyle-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://kindstyle:kindstyle_dev@postgres:5432/kindstyle_dev
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-your-super-secret-refresh-key-change-in-production}
+      - RESEND_API_KEY=${RESEND_API_KEY:-re_your_resend_api_key}
+      - EMAIL_FROM=${EMAIL_FROM:-noreply@kindstyle.com}
+      - FORTNITE_API_KEY=${FORTNITE_API_KEY:-your_fortnite_api_key}
+      - FORTNITE_API_URL=https://fortnite-api.com
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-your-32-char-encryption-key-here}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      - NEXT_PUBLIC_WHATSAPP_NUMBER=${NEXT_PUBLIC_WHATSAPP_NUMBER:-+523191033181}
+      - MOCK_FORTNITE=${MOCK_FORTNITE:-false}
+      - MOCK_FULFILLMENT=${MOCK_FULFILLMENT:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ============================================
+  # Background Worker (Catalog Sync)
+  # ============================================
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    container_name: kindstyle-worker
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://kindstyle:kindstyle_dev@postgres:5432/kindstyle_dev
+      - REDIS_URL=redis://redis:6379
+      - FORTNITE_API_KEY=${FORTNITE_API_KEY:-your_fortnite_api_key}
+      - RESEND_API_KEY=${RESEND_API_KEY:-re_your_resend_api_key}
+      - EMAIL_FROM=${EMAIL_FROM:-noreply@kindstyle.com}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY:-your-32-char-encryption-key-here}
+      - CATALOG_SYNC_INTERVAL=3600000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ============================================
+  # Optional: Redis Commander (GUI)
+  # ============================================
   redis-commander:
     image: rediscommander/redis-commander:latest
     container_name: kindstyle-redis-gui

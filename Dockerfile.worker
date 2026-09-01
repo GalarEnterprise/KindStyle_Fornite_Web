@@ -1,0 +1,36 @@
+# ============================================
+# KindStyle Fortnite Store - Background Worker
+# ============================================
+
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/database/package.json ./packages/database/
+COPY packages/shared/package.json ./packages/shared/
+COPY workers/package.json ./workers/
+
+RUN npm ci
+
+COPY . .
+
+RUN npm run db:generate
+RUN npm run build --workspace=workers
+
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 worker
+
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages/database ./packages/database
+COPY --from=builder /app/packages/shared ./packages/shared
+COPY --from=builder /app/workers/dist ./workers/dist
+
+USER worker
+
+CMD ["node", "workers/dist/index.js"]
