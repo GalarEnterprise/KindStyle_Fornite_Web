@@ -26,14 +26,13 @@ if [ ! -f .env ]; then
     read -p "Press Enter after editing .env..."
 fi
 
-echo "🐳 Starting Docker containers..."
+echo "🐳 Starting PostgreSQL and Redis..."
 docker compose up -d postgres redis
 
 echo ""
 echo "⏳ Waiting for PostgreSQL to be ready..."
 sleep 5
 
-# Wait for postgres to be healthy
 for i in {1..30}; do
     if docker compose exec postgres pg_isready -U kindstyle > /dev/null 2>&1; then
         echo "✅ PostgreSQL is ready!"
@@ -44,24 +43,16 @@ for i in {1..30}; do
 done
 
 echo ""
-echo "🐳 Starting web and worker containers..."
+echo "🏗️  Building all containers..."
+docker compose build
+
+echo ""
+echo "🗄️  Running migrations, seed and catalog sync..."
+docker compose run --rm --profile tools migrate
+
+echo ""
+echo "🐳 Starting web and worker..."
 docker compose up -d web worker
-
-echo ""
-echo "⏳ Waiting for web container to be ready..."
-sleep 5
-
-echo ""
-echo "🗄️  Running database migrations..."
-docker compose exec -u root web npx prisma db push --schema=packages/database/prisma/schema.prisma --accept-data-loss
-
-echo ""
-echo "🌱 Seeding database..."
-docker compose exec -u root web npx tsx packages/database/prisma/seed.ts
-
-echo ""
-echo "🔄 Syncing catalog from Fortnite API..."
-docker compose exec -u root web npx tsx scripts/sync-catalog.ts
 
 echo ""
 echo "✅ Setup complete!"

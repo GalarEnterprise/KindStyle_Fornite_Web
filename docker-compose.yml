@@ -92,6 +92,33 @@ services:
         condition: service_healthy
 
   # ============================================
+  # Migration Service (run with: docker compose run --rm migrate)
+  # ============================================
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    profiles:
+      - tools
+    environment:
+      - DATABASE_URL=postgresql://kindstyle:kindstyle_dev@postgres:5432/kindstyle_dev
+      - FORTNITE_API_KEY=${FORTNITE_API_KEY:-your_fortnite_api_key}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        echo "Running migrations..."
+        npx prisma db push --schema=packages/database/prisma/schema.prisma --accept-data-loss
+        echo "Seeding database..."
+        npx tsx packages/database/prisma/seed.ts
+        echo "Syncing catalog..."
+        npx tsx scripts/sync-catalog.ts
+        echo "Done!"
+
+  # ============================================
   # Optional: Redis Commander (GUI)
   # ============================================
   redis-commander:
