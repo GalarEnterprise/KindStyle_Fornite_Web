@@ -65,6 +65,31 @@ async function main() {
     console.log(`[Seed] Super Admin already exists: ${adminEmail}`)
   }
 
+  // Create demo users for client testing
+  const demoUsers = [
+    { email: 'demo@kindstyle.com', nickname: 'DemoUser', password: 'demo123456', role: 'USER' as const },
+    { email: 'cliente@kindstyle.com', nickname: 'ClienteTest', password: 'cliente123', role: 'USER' as const },
+  ]
+
+  for (const demo of demoUsers) {
+    const existing = await prisma.user.findUnique({ where: { email: demo.email } })
+    if (!existing) {
+      const hash = await bcrypt.hash(demo.password, 12)
+      await prisma.user.create({
+        data: {
+          email: demo.email,
+          password_hash: hash,
+          nickname: demo.nickname,
+          role: demo.role,
+          verification_status: 'VERIFIED',
+        },
+      })
+      console.log(`[Seed] Demo user created: ${demo.email} / ${demo.password}`)
+    } else {
+      console.log(`[Seed] Demo user already exists: ${demo.email}`)
+    }
+  }
+
   await prisma.currencySetting.upsert({
     where: { id: 'default' },
     update: {},

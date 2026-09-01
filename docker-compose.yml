@@ -62,6 +62,7 @@ services:
       - NEXT_PUBLIC_WHATSAPP_NUMBER=${NEXT_PUBLIC_WHATSAPP_NUMBER:-+523191033181}
       - MOCK_FORTNITE=${MOCK_FORTNITE:-false}
       - MOCK_FULFILLMENT=${MOCK_FULFILLMENT:-false}
+      - MOCK_EMAIL=true
     depends_on:
       postgres:
         condition: service_healthy
