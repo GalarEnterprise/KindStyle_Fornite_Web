@@ -101,6 +101,7 @@ services:
       target: builder
     profiles:
       - tools
+    working_dir: /app
     environment:
       - DATABASE_URL=postgresql://kindstyle:kindstyle_dev@postgres:5432/kindstyle_dev
       - FORTNITE_API_KEY=${FORTNITE_API_KEY:-your_fortnite_api_key}
@@ -111,11 +112,11 @@ services:
     command:
       - |
         echo "Running migrations..."
-        npx prisma db push --schema=packages/database/prisma/schema.prisma --accept-data-loss
+        ./node_modules/.bin/prisma db push --schema=packages/database/prisma/schema.prisma --accept-data-loss
         echo "Seeding database..."
-        npx tsx packages/database/prisma/seed.ts
+        ./node_modules/.bin/tsx packages/database/prisma/seed.ts
         echo "Syncing catalog..."
-        npx tsx scripts/sync-catalog.ts
+        ./node_modules/.bin/tsx scripts/sync-catalog.ts
         echo "Done!"
 
   # ============================================
