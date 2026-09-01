@@ -43,12 +43,36 @@ for i in {1..30}; do
 done
 
 echo ""
-echo "🏗️  Building all containers..."
-docker compose build
+echo "🏗️  Building builder image (with Prisma, tsx, etc)..."
+docker build --target builder -t kindstyle-builder .
+
+NETWORK=$(docker compose ls --format json | grep -o '"kindstyle_tienda_fornite_default"' || echo "kindstyle_tienda_fornite_default")
 
 echo ""
-echo "🗄️  Running migrations, seed and catalog sync..."
-docker compose run --rm --profile tools migrate
+echo "🗄️  Running database migrations..."
+docker run --rm \
+  --network kindstyle_tienda_fornite_default \
+  -e DATABASE_URL=postgresql://kindstyle:kindstyle_dev@postgres:5432/kindstyle_dev \
+  -e FORTNITE_API_KEY=${FORTNITE_API_KEY:-} \
+  kindstyle-builder \
+  sh -c "./node_modules/.bin/prisma db push --schema=packages/database/prisma/schema.prisma --accept-data-loss"
+
+echo ""
+echo "🌱 Seeding database..."
+docker run --rm \
+  --network kindstyle_tienda_fornite_default \
+  -e DATABASE_URL=postgresql://kindstyle:kindstyle_dev@postgres:5432/kindstyle_dev \
+  kindstyle-builder \
+  sh -c "./node_modules/.bin/tsx packages/database/prisma/seed.ts"
+
+echo ""
+echo "🔄 Syncing catalog from Fortnite API..."
+docker run --rm \
+  --network kindstyle_tienda_fornite_default \
+  -e DATABASE_URL=postgresql://kindstyle:kindstyle_dev@postgres:5432/kindstyle_dev \
+  -e FORTNITE_API_KEY=${FORTNITE_API_KEY:-} \
+  kindstyle-builder \
+  sh -c "./node_modules/.bin/tsx scripts/sync-catalog.ts"
 
 echo ""
 echo "🐳 Starting web and worker..."
@@ -59,8 +83,8 @@ echo "✅ Setup complete!"
 echo ""
 echo "🚀 Services running:"
 echo "   - Web App:    http://localhost:3000"
-echo "   - PostgreSQL: localhost:5433"
-echo "   - Redis:      localhost:6379"
+echo "   - PostgreSQL: localhost:5434"
+echo "   - Redis:      localhost:6380"
 echo ""
 echo "📊 Useful commands:"
 echo "   - View logs:    docker compose logs -f"
