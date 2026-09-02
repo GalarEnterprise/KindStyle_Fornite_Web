@@ -1,7 +1,9 @@
 import { Worker, Queue } from 'bullmq'
 import IORedis from 'ioredis'
 import { createHash } from 'crypto'
+import type { Prisma } from '@prisma/client'
 import { PrismaClient } from '@kindstyle/database'
+import { extractEntryTheme, type ShopEntryTheme } from '@kindstyle/shared'
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379'
 const SYNC_INTERVAL_MS = parseInt(process.env.CATALOG_SYNC_INTERVAL || '3600000')
@@ -35,10 +37,28 @@ interface FortniteShopEntry {
   layout?: { id: string; name: string }
   offerId?: string
   bundle?: { name: string; info: string; image: string }
+  brItems?: FortniteShopItem[]
   newDisplayAsset?: {
     id: string
     materialInstances: Array<{ images: Record<string, string> }>
+    renderImages?: Array<{ image?: string } | null>
   }
+}
+
+interface FortniteBannerApiItem {
+  id: string
+  devName: string
+  name: string
+  description: string | null
+  category: string | null
+  images?: { smallIcon?: string; icon?: string }
+}
+
+interface FortniteBannerColorApiItem {
+  id: string
+  color: string
+  category: string | null
+  subCategoryGroup: number | null
 }
 
 interface FortniteShopResponse {
@@ -122,20 +142,14 @@ function computeChecksum(payload: unknown): string {
   return createHash('sha256').update(serialized).digest('hex')
 }
 
-async function fetchShop(): Promise<FortniteShopResponse> {
+async function fetchJson<T>(url: string): Promise<T> {
   const apiKey = process.env.FORTNITE_API_KEY
-  const baseUrl = process.env.FORTNITE_API_URL || 'https://fortnite-api.com'
-  const language = process.env.FORTNITE_API_LANGUAGE || 'es'
-
   if (!apiKey) {
     throw new Error('FORTNITE_API_KEY is not set')
   }
 
-  const url = `${baseUrl}/v2/shop?language=${language}`
-  console.log(`[CatalogWorker] Fetching shop from ${url}`)
-
   const response = await fetch(url, {
-    headers: { 'x-api-key': apiKey, 'Accept': 'application/json' },
+    headers: { 'Authorization': apiKey, 'Accept': 'application/json' },
     signal: AbortSignal.timeout(30000),
   })
 
@@ -143,14 +157,98 @@ async function fetchShop(): Promise<FortniteShopResponse> {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`)
   }
 
-  const data = await response.json()
+  const body = (await response.json()) as { status: number }
 
-  if (data.status !== 200) {
-    throw new Error(`API returned status ${data.status}`)
+  if (body.status !== 200) {
+    throw new Error(`API returned status ${body.status}`)
   }
+
+  return body as T
+}
+
+async function fetchShop(): Promise<FortniteShopResponse> {
+  const baseUrl = process.env.FORTNITE_API_URL || 'https://fortnite-api.com'
+  const language = process.env.FORTNITE_API_LANGUAGE || 'es'
+  const url = `${baseUrl}/v2/shop?language=${language}`
+  console.log(`[CatalogWorker] Fetching shop from ${url}`)
+
+  const data = await fetchJson<FortniteShopResponse>(url)
 
   console.log(`[CatalogWorker] Fetched ${data.data.entries.length} entries`)
   return data
+}
+
+async function syncBannerReferenceData(): Promise<void> {
+  const baseUrl = process.env.FORTNITE_API_URL || 'https://fortnite-api.com'
+  const language = process.env.FORTNITE_API_LANGUAGE || 'es'
+
+  try {
+    const [bannersRes, colorsRes] = await Promise.all([
+      fetchJson<{ data: FortniteBannerApiItem[] }>(`${baseUrl}/v1/banners?language=${language}`),
+      fetchJson<{ data: FortniteBannerColorApiItem[] }>(`${baseUrl}/v1/banners/colors`),
+    ])
+
+    const syncedAt = new Date()
+    const CHUNK_SIZE = 50
+
+    for (let i = 0; i < bannersRes.data.length; i += CHUNK_SIZE) {
+      const chunk = bannersRes.data.slice(i, i + CHUNK_SIZE)
+      await Promise.all(
+        chunk.map((banner) =>
+          prisma.fortniteBanner.upsert({
+            where: { id: banner.id },
+            update: {
+              dev_name: banner.devName || null,
+              name: banner.name,
+              category: banner.category || null,
+              small_icon_url: banner.images?.smallIcon || null,
+              icon_url: banner.images?.icon || null,
+              synced_at: syncedAt,
+            },
+            create: {
+              id: banner.id,
+              dev_name: banner.devName || null,
+              name: banner.name,
+              category: banner.category || null,
+              small_icon_url: banner.images?.smallIcon || null,
+              icon_url: banner.images?.icon || null,
+              synced_at: syncedAt,
+            },
+          })
+        )
+      )
+    }
+
+    for (let i = 0; i < colorsRes.data.length; i += CHUNK_SIZE) {
+      const chunk = colorsRes.data.slice(i, i + CHUNK_SIZE)
+      await Promise.all(
+        chunk.map((color) =>
+          prisma.fortniteBannerColor.upsert({
+            where: { id: color.id },
+            update: {
+              color: color.color,
+              category: color.category || null,
+              sub_category_group: color.subCategoryGroup ?? null,
+              synced_at: syncedAt,
+            },
+            create: {
+              id: color.id,
+              color: color.color,
+              category: color.category || null,
+              sub_category_group: color.subCategoryGroup ?? null,
+              synced_at: syncedAt,
+            },
+          })
+        )
+      )
+    }
+
+    console.log(
+      `[CatalogWorker] Banner reference synced: ${bannersRes.data.length} banners, ${colorsRes.data.length} colors`
+    )
+  } catch (error) {
+    console.error('[CatalogWorker] Banner reference sync failed (shop sync unaffected):', error)
+  }
 }
 
 async function acquireLock(): Promise<boolean> {
@@ -167,7 +265,7 @@ async function invalidateCache(): Promise<void> {
   console.log('[CatalogWorker] Shop cache invalidated')
 }
 
-async function syncCatalog(): Promise<void> {
+export async function syncCatalog(): Promise<void> {
   const locked = await acquireLock()
   if (!locked) {
     console.log('[CatalogWorker] Another sync is already running. Skipping.')
@@ -205,16 +303,21 @@ async function syncCatalog(): Promise<void> {
       featuredImageUrl: string | null
       giftable: string
       section: string | null
+      layoutId: string | null
+      theme: ShopEntryTheme | null
       offerId: string | null
       bundleInfo: { name: string; info: string; image: string } | null
     }> = []
 
     for (const entry of shopResponse.data.entries) {
-      if (!entry.items || entry.items.length === 0) continue
+      const entryItems = entry.brItems ?? entry.items
+      if (!entryItems || entryItems.length === 0) continue
 
-      const isBundle = entry.items.length > 1
-      const primaryItem = entry.items[0]
+      const isBundle = entryItems.length > 1
+      const primaryItem = entryItems[0]
       const section = entry.layout?.name || null
+      const layoutId = entry.layout?.id || null
+      const theme = extractEntryTheme(entry)
       const offerId = entry.offerId || null
       const bundleInfo = entry.bundle || null
 
@@ -234,11 +337,13 @@ async function syncCatalog(): Promise<void> {
           featuredImageUrl: primaryItem.images?.featured || null,
           giftable: resolveGiftability(productType),
           section,
+          layoutId,
+          theme,
           offerId,
           bundleInfo,
         })
       } else {
-        for (const item of entry.items) {
+        for (const item of entryItems) {
           const productType = resolveType(item.type?.value)
           normalizedProducts.push({
             fortniteProductId: item.id,
@@ -254,6 +359,8 @@ async function syncCatalog(): Promise<void> {
             featuredImageUrl: item.images?.featured || null,
             giftable: resolveGiftability(productType),
             section,
+            layoutId,
+            theme,
             offerId,
             bundleInfo,
           })
@@ -353,6 +460,8 @@ async function syncCatalog(): Promise<void> {
               price_vbucks: product.priceVbucks,
               display_order: displayOrder++,
               section: product.section,
+              layout_id: product.layoutId,
+              theme: (product.theme ?? undefined) as Prisma.InputJsonValue | undefined,
               offer_id: product.offerId,
               bundle_info: product.bundleInfo || undefined,
               featured: displayOrder <= 5,
@@ -363,6 +472,8 @@ async function syncCatalog(): Promise<void> {
     })
 
     await invalidateCache()
+
+    await syncBannerReferenceData()
 
     console.log('[CatalogWorker] Sync complete')
   } catch (error) {

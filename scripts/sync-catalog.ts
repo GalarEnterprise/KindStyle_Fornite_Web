@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import { createHash } from 'crypto'
+import { extractEntryTheme, isAllowedImageHost } from '@kindstyle/shared'
 
 const prisma = new PrismaClient()
 
@@ -27,10 +28,32 @@ interface FortniteShopEntry {
   offerId: string
   giftable: boolean
   refundable: boolean
+  colors?: Record<string, string | undefined> | null
   layout?: { id: string; name: string }
   bundle?: { name: string; info: string; image: string }
   brItems?: BrItem[]
   tracks?: unknown[]
+  newDisplayAsset?: {
+    id: string
+    materialInstances?: Array<{ images: Record<string, string> }>
+    renderImages?: Array<{ image?: string } | null>
+  }
+}
+
+interface BannerApiItem {
+  id: string
+  devName: string
+  name: string
+  description: string | null
+  category: string | null
+  images?: { smallIcon?: string; icon?: string }
+}
+
+interface BannerColorApiItem {
+  id: string
+  color: string
+  category: string | null
+  subCategoryGroup: number | null
 }
 
 interface FortniteShopResponse {
@@ -209,6 +232,8 @@ async function syncCatalog() {
           price_vbucks: entry.finalPrice,
           display_order: itemCount,
           section: entry.layout?.name || null,
+          layout_id: entry.layout?.id || null,
+          theme: extractEntryTheme(entry) ?? undefined,
           offer_id: entry.offerId || null,
           bundle_info: entry.bundle || null,
           featured: entry.layout?.name?.toLowerCase().includes('featured') || false,
@@ -224,7 +249,95 @@ async function syncCatalog() {
   console.log('[Sync] Done!')
 }
 
-syncCatalog()
+async function fetchBannerReferenceJson<T>(pathname: string): Promise<T> {
+  const response = await fetch(`${API_BASE}${pathname}`, {
+    method: 'GET',
+    headers: {
+      'Authorization': API_KEY!,
+      'Accept': 'application/json',
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+  }
+
+  return (await response.json()) as T
+}
+
+async function syncBanners() {
+  console.log('[Sync] Syncing banner reference data...')
+
+  const banners = await fetchBannerReferenceJson<{ status: number; data: BannerApiItem[] }>('/v1/banners?language=es')
+  const colors = await fetchBannerReferenceJson<{ status: number; data: BannerColorApiItem[] }>('/v1/banners/colors')
+
+  const syncedAt = new Date()
+  const CHUNK_SIZE = 50
+
+  for (let i = 0; i < banners.data.length; i += CHUNK_SIZE) {
+    const chunk = banners.data.slice(i, i + CHUNK_SIZE)
+    await Promise.all(
+      chunk.map((banner) =>
+        prisma.fortniteBanner.upsert({
+          where: { id: banner.id },
+          update: {
+            dev_name: banner.devName || null,
+            name: banner.name,
+            category: banner.category || null,
+            small_icon_url: isAllowedImageHost(banner.images?.smallIcon) ? banner.images.smallIcon : null,
+            icon_url: isAllowedImageHost(banner.images?.icon) ? banner.images.icon : null,
+            synced_at: syncedAt,
+          },
+          create: {
+            id: banner.id,
+            dev_name: banner.devName || null,
+            name: banner.name,
+            category: banner.category || null,
+            small_icon_url: isAllowedImageHost(banner.images?.smallIcon) ? banner.images.smallIcon : null,
+            icon_url: isAllowedImageHost(banner.images?.icon) ? banner.images.icon : null,
+            synced_at: syncedAt,
+          },
+        })
+      )
+    )
+  }
+
+  for (let i = 0; i < colors.data.length; i += CHUNK_SIZE) {
+    const chunk = colors.data.slice(i, i + CHUNK_SIZE)
+    await Promise.all(
+      chunk.map((color) =>
+        prisma.fortniteBannerColor.upsert({
+          where: { id: color.id },
+          update: {
+            color: color.color,
+            category: color.category || null,
+            sub_category_group: color.subCategoryGroup ?? null,
+            synced_at: syncedAt,
+          },
+          create: {
+            id: color.id,
+            color: color.color,
+            category: color.category || null,
+            sub_category_group: color.subCategoryGroup ?? null,
+            synced_at: syncedAt,
+          },
+        })
+      )
+    )
+  }
+
+  console.log(`[Sync] ${banners.data.length} banners and ${colors.data.length} banner colors upserted`)
+}
+
+async function main() {
+  await syncCatalog()
+
+  if (process.argv.includes('--with-banners')) {
+    await syncBanners()
+  }
+}
+
+main()
   .catch((e) => {
     console.error('[Sync] Error:', e)
     process.exit(1)

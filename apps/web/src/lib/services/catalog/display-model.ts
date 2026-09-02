@@ -1,4 +1,9 @@
 import type { Product, ShopItem } from '@prisma/client'
+import {
+  isAllowedImageHost,
+  parseShopEntryTheme,
+  type BannerReference,
+} from '@kindstyle/shared'
 
 type ShopItemWithProduct = ShopItem & { product: Product }
 
@@ -7,6 +12,7 @@ export type ShopSection = {
   title: string
   slug: string
   order: number
+  layoutId: string | null
 }
 
 export type ShopDisplayBundle = {
@@ -30,12 +36,74 @@ export type ShopDisplayItem = {
 
 export type ShopDisplayEntry = ShopDisplayBundle | ShopDisplayItem
 
+export type ShopDisplayBanner = {
+  image?: string
+  gradient?: [string, string]
+  backgroundColor?: string
+}
+
 export type ShopDisplaySection = {
   id: string
   title: string
   slug: string
   order: number
+  layoutId: string | null
   entries: ShopDisplayEntry[]
+  banner?: ShopDisplayBanner
+}
+
+function fnv1a(input: string): number {
+  let hash = 0x811c9dc5
+  for (let i = 0; i < input.length; i++) {
+    hash ^= input.charCodeAt(i)
+    hash = Math.imul(hash, 0x01000193) >>> 0
+  }
+  return hash >>> 0
+}
+
+function resolveSectionBanner(
+  sectionItems: ShopItemWithProduct[],
+  layoutId: string | null,
+  slug: string,
+  referenceBanners: BannerReference[],
+  takenBannerIds: Set<string>
+): ShopDisplayBanner | undefined {
+  const baseItem =
+    sectionItems.find((item) => item.featured) ?? sectionItems[0]
+
+  const theme = parseShopEntryTheme(baseItem?.theme)
+  const color1 = theme?.color1
+  const color3 = theme?.color3
+  const textBackgroundColor = theme?.textBackgroundColor
+  const tileImage = isAllowedImageHost(theme?.tileImage) ? theme?.tileImage : undefined
+
+  if (tileImage || (color1 && color3) || textBackgroundColor) {
+    const banner: ShopDisplayBanner = {}
+    if (tileImage) banner.image = tileImage
+    if (color1 && color3) {
+      banner.gradient = [color1, color3]
+    } else if (textBackgroundColor) {
+      banner.backgroundColor = textBackgroundColor
+    }
+    return banner
+  }
+
+  if (referenceBanners.length > 0) {
+    const key = layoutId ?? slug
+    const baseHash = fnv1a(key)
+
+    for (let salt = 0; salt < referenceBanners.length; salt++) {
+      const candidate = referenceBanners[(baseHash + salt) % referenceBanners.length]
+      if (!candidate) continue
+      if (takenBannerIds.has(candidate.id)) continue
+      if (!isAllowedImageHost(candidate.iconUrl)) continue
+
+      takenBannerIds.add(candidate.id)
+      return { image: candidate.iconUrl }
+    }
+  }
+
+  return undefined
 }
 
 function normalizeSlug(name: string): string {
@@ -54,7 +122,12 @@ function extractSections(items: ShopItemWithProduct[]): ShopSection[] {
 
   for (const item of items) {
     if (!item.section) continue
-    if (sectionMap.has(item.section)) continue
+
+    const existing = sectionMap.get(item.section)
+    if (existing) {
+      if (!existing.layoutId && item.layout_id) existing.layoutId = item.layout_id
+      continue
+    }
 
     const slug = normalizeSlug(item.section)
     sectionMap.set(item.section, {
@@ -62,6 +135,7 @@ function extractSections(items: ShopItemWithProduct[]): ShopSection[] {
       title: item.section,
       slug,
       order: order++,
+      layoutId: item.layout_id ?? null,
     })
   }
 
@@ -143,31 +217,46 @@ function groupBundlesByOfferId(
   return entries
 }
 
-export function buildShopDisplayModel(items: ShopItemWithProduct[]): ShopDisplaySection[] {
+export function buildShopDisplayModel(
+  items: ShopItemWithProduct[],
+  referenceBanners: BannerReference[] = []
+): ShopDisplaySection[] {
   const sections = extractSections(items)
   const sectionsWithEntries: ShopDisplaySection[] = []
+  const takenBannerIds = new Set<string>()
 
   for (const section of sections) {
     const sectionItems = items.filter((item) => item.section === section.title)
     if (sectionItems.length === 0) continue
 
     const entries = groupBundlesByOfferId(sectionItems, section.title)
+    const banner = resolveSectionBanner(sectionItems, section.layoutId, section.slug, referenceBanners, takenBannerIds)
 
     sectionsWithEntries.push({
       ...section,
       entries,
+      banner,
     })
   }
 
   const itemsWithoutSection = items.filter((item) => !item.section)
   if (itemsWithoutSection.length > 0) {
     const entries = itemsWithoutSection.map((item) => createDisplayEntry(item))
+    const otherBanner = resolveSectionBanner(
+      itemsWithoutSection,
+      null,
+      'otros',
+      referenceBanners,
+      takenBannerIds
+    )
     sectionsWithEntries.push({
       id: 'other',
       title: 'Otros',
       slug: 'otros',
       order: sections.length,
+      layoutId: null,
       entries,
+      banner: otherBanner,
     })
   }
 

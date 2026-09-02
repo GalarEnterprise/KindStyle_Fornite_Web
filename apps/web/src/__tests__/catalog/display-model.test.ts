@@ -42,6 +42,8 @@ function createMockShopItem(overrides: Partial<ShopItem> = {}): ShopItem {
     price_vbucks: 1000,
     display_order: 0,
     section: 'Featured',
+    layout_id: null,
+    theme: null,
     offer_id: null,
     bundle_info: null,
     featured: false,
@@ -135,5 +137,157 @@ describe('buildShopDisplayModel', () => {
 
     expect(result).toHaveLength(1)
     expect(result[0].title).toBe('Otros')
+  })
+})
+
+const REF_BANNERS = [
+  { id: 'ref-a', iconUrl: 'https://fortnite-api.com/images/banners/ref-a/icon.png' },
+  { id: 'ref-b', iconUrl: 'https://fortnite-api.com/images/banners/ref-b/icon.png' },
+  { id: 'ref-c', iconUrl: 'https://fortnite-api.com/images/banners/ref-c/icon.png' },
+  { id: 'ref-d', iconUrl: 'https://fortnite-api.com/images/banners/ref-d/icon.png' },
+]
+
+describe('buildShopDisplayModel section banners', () => {
+  it('resolves banner image + gradient from the featured entry theme', () => {
+    const items = [
+      createMockShopItemWithProduct(
+        { name: 'Other Item' },
+        {
+          section: 'Kai Cenat',
+          layout_id: 'KaiCenat',
+          featured: false,
+          theme: { tileImage: 'https://fortnite-api.com/images/shop/other.png', color1: '#111111' },
+        }
+      ),
+      createMockShopItemWithProduct(
+        { name: 'Featured Item' },
+        {
+          section: 'Kai Cenat',
+          layout_id: 'KaiCenat',
+          featured: true,
+          theme: {
+            tileImage: 'https://fortnite-api.com/images/shop/featured.png',
+            color1: '#f86b71ff',
+            color3: '#ffa9a5ff',
+            textBackgroundColor: '#784042ff',
+          },
+        }
+      ),
+    ]
+
+    const result = buildShopDisplayModel(items)
+
+    expect(result[0].layoutId).toBe('KaiCenat')
+    expect(result[0].banner).toEqual({
+      image: 'https://fortnite-api.com/images/shop/featured.png',
+      gradient: ['#f86b71ff', '#ffa9a5ff'],
+    })
+  })
+
+  it('uses first item as base when none is featured', () => {
+    const items = [
+      createMockShopItemWithProduct(
+        { name: 'First' },
+        {
+          section: 'Aura maxima',
+          layout_id: 'AuraMax',
+          display_order: 0,
+          theme: { tileImage: 'https://fortnite-api.com/images/shop/first.png' },
+        }
+      ),
+      createMockShopItemWithProduct(
+        { name: 'Second' },
+        {
+          section: 'Aura maxima',
+          layout_id: 'AuraMax',
+          display_order: 1,
+          theme: { tileImage: 'https://fortnite-api.com/images/shop/second.png' },
+        }
+      ),
+    ]
+
+    const result = buildShopDisplayModel(items)
+
+    expect(result[0].banner?.image).toBe('https://fortnite-api.com/images/shop/first.png')
+  })
+
+  it('falls back to a deterministic reference banner when no theme exists', () => {
+    const items = [
+      createMockShopItemWithProduct({ name: 'A' }, { section: 'Seccion A', layout_id: 'LayoutA' }),
+      createMockShopItemWithProduct({ name: 'B' }, { section: 'Seccion B', layout_id: 'LayoutB' }),
+    ]
+
+    const first = buildShopDisplayModel(items, REF_BANNERS)
+    const second = buildShopDisplayModel(items, REF_BANNERS)
+
+    expect(first[0].banner?.image).toBeTruthy()
+    expect(first[1].banner?.image).toBeTruthy()
+    expect(first[0].banner?.image).not.toBe(first[1].banner?.image)
+    expect(second).toEqual(first)
+  })
+
+  it('leaves banner undefined when there is no theme and no reference banners', () => {
+    const items = [
+      createMockShopItemWithProduct({ name: 'A' }, { section: 'Seccion A', layout_id: 'LayoutA' }),
+    ]
+
+    const result = buildShopDisplayModel(items)
+
+    expect(result[0].banner).toBeUndefined()
+  })
+
+  it('ignores non-whitelisted theme images and falls back to references', () => {
+    const items = [
+      createMockShopItemWithProduct(
+        { name: 'A' },
+        {
+          section: 'Seccion A',
+          layout_id: 'LayoutA',
+          theme: { tileImage: 'https://evil.example.com/x.png' },
+        }
+      ),
+    ]
+
+    const result = buildShopDisplayModel(items, REF_BANNERS)
+
+    expect(result[0].banner?.image).toContain('fortnite-api.com')
+  })
+
+  it('uses textBackgroundColor as solid background when no gradient pair exists', () => {
+    const items = [
+      createMockShopItemWithProduct(
+        { name: 'A' },
+        {
+          section: 'Seccion A',
+          layout_id: 'LayoutA',
+          theme: { color1: '#112233', textBackgroundColor: '#445566' },
+        }
+      ),
+    ]
+
+    const result = buildShopDisplayModel(items, REF_BANNERS)
+
+    expect(result[0].banner).toEqual({ backgroundColor: '#445566' })
+  })
+
+  it('does not leak the Otros theme into a layout section banner', () => {
+    const items = [
+      createMockShopItemWithProduct(
+        { name: 'No Layout' },
+        {
+          section: null,
+          layout_id: null,
+          theme: { tileImage: 'https://fortnite-api.com/images/shop/orros-only.png' },
+        }
+      ),
+      createMockShopItemWithProduct({ name: 'In Layout' }, { section: 'Rambo', layout_id: 'Rambo' }),
+    ]
+
+    const result = buildShopDisplayModel(items)
+
+    const rambo = result.find((s) => s.title === 'Rambo')
+    const otros = result.find((s) => s.title === 'Otros')
+    expect(rambo?.banner).toBeUndefined()
+    expect(otros?.banner?.image).toBe('https://fortnite-api.com/images/shop/orros-only.png')
   })
 })

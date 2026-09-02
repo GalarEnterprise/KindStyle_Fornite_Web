@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 
 interface Section {
   id: string
   title: string
   slug: string
+  thumbUrl?: string | null
 }
 
 interface SectionSidebarProps {
@@ -50,12 +52,21 @@ export function SectionSidebar({ sections }: SectionSidebarProps) {
               <li key={section.slug}>
                 <a
                   href={`#section-${section.slug}`}
-                  className={`block px-3 py-2 rounded-md text-sm transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
                     activeSection === section.slug
                       ? 'bg-purple-600 text-white'
                       : 'text-gray-300 hover:bg-gray-800 hover:text-white'
                   }`}
                 >
+                  {section.thumbUrl && (
+                    <Image
+                      src={section.thumbUrl}
+                      alt=""
+                      width={24}
+                      height={24}
+                      className="h-6 w-6 flex-shrink-0 rounded object-cover"
+                    />
+                  )}
                   {section.title}
                 </a>
               </li>

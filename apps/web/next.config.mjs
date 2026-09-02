@@ -6,7 +6,15 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
+        hostname: 'fortnite-api.com',
+      },
+      {
+        protocol: 'https',
         hostname: '**.fortnite-api.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'epicgames.com',
       },
       {
         protocol: 'https',

@@ -258,3 +258,116 @@ No asumir TRUE si hay incertidumbre.
 - Puede activar/desactivar productos
 - Puede forzar sincronización manual
 - Precio V-Bucks configurable: 100 V = 7.5 MXN (default)
+
+## Secciones y Bundles (Navegación y Packs)
+
+### Secciones
+
+### REQ-SEC-001: Detección de Secciones
+
+El sistema DEBE extraer secciones del campo `layout.name` de la API.
+
+- Cada sección DEBE tener `id` (layout.id), `title` (layout.name), `slug` (kebab-case)
+- Las secciones DEBEN preservar el orden de la API
+- NO DEBE hardcodearse nombres de secciones
+
+### REQ-SEC-002: Navegación Lateral
+
+El sistema DEBE mostrar una sidebar con enlaces a cada sección.
+
+- Cada enlace DEBE apuntar a `#section-{slug}`
+- DEBE resaltar la sección actualmente visible
+- En mobile, DEBE ser una barra horizontal desplazable
+
+### REQ-SEC-003: Scroll Suave
+
+Al hacer clic en una sección, DEBE hacer scroll suave.
+
+- Usar `scroll-behavior: smooth`
+- Usar `scroll-margin-top` para compensar header sticky
+
+### REQ-SEC-004: Anchors
+
+Cada sección DEBE tener `id="section-{slug}"`.
+
+- Los deep links DEBEN funcionar: `/shop#section-featured`
+
+### Bundles
+
+### REQ-BND-001: Detección de Bundles
+
+El sistema DEBE detectar bundles usando la propiedad `bundle` de la API.
+
+- Si un entry tiene `bundle: { name, info, image }`, ES un bundle
+- El `bundle.name` es el nombre del pack
+- Los items del entry son los componentes del bundle
+
+### REQ-BND-002: Visualización de Bundles
+
+Los bundles DEBEN mostrarse como una sola card.
+
+- Mostrar imagen del bundle (`bundle.image`)
+- Mostrar nombre del bundle (`bundle.name`)
+- Mostrar precio total (V-Bucks + MXN)
+- Botón de agregar al carrito
+
+### REQ-BND-003: Componentes del Bundle
+
+Los componentes DEBEN mostrarse debajo del bundle.
+
+- Lista de nombres de componentes
+- Sin precios individuales (solo el bundle tiene precio)
+- Formato simple: "Incluye: Item 1, Item 2, Item 3"
+
+### REQ-BND-004: Fallback
+
+Si un entry NO tiene `bundle`, se muestra como item individual.
+
+- No romper la tienda si `bundle` es undefined
+- Products sin bundle → ProductCard normal
+
+## Sección Banners — Datos de Referencia
+### Requirement: Sincronización de banners de referencia
+
+El sistema DEBE sincronizar los datos de referencia de banners desde la Community Fortnite API además del `/v2/shop`.
+
+- DEBE consumir `GET /v1/banners` (soportando `language`) y persistir `id`, `devName`, `name`, `category` e imágenes (`smallIcon`, `icon`)
+- DEBE consumir `GET /v1/banners/colors` y persistir el mapeo token→valor de color (`id`, `color`, `category`)
+- DEBE ejecutarse dentro del flujo de sincronización del worker, con frecuencia menor o igual a la del shop
+- Si la API de banners falla, NO DEBE abortar la sincronización del shop: DEBE conservar los últimos datos de referencia persistidos
+- Todo error DEBE ser logueado con contexto
+
+#### Scenario: Sincronización exitosa de banners
+
+- **WHEN** el worker completa un fetch del `/v2/shop` y obtiene `200` en `/v1/banners` y `/v1/banners/colors`
+- **THEN** los banners y tokens de color quedan actualizados en la base de datos
+- **AND** la operación queda registrada en el log sin errores
+
+#### Scenario: Fallo del endpoint de banners
+
+- **WHEN** `/v1/banners` responde `5xx` o expira el timeout durante una sincronización
+- **THEN** el shop del día se sincroniza con normalidad
+- **AND** los datos de referencia de banners conservan su último valor válido
+- **AND** el error queda logueado
+
+### Requirement: Persistencia del tema visual por entry
+
+El sistema DEBE persistir por cada entry de la tienda los datos que determinan el tema de su sección, sin descartarlos durante la normalización.
+
+- DEBE guardarse `layout.id` junto con `layout.name` (hoy solo se conserva el nombre)
+- DEBE guardarse `colors` del entry (`color1`, `color3`, `textBackgroundColor` cuando existan)
+- DEBE guardarse la URL de arte del tile del entry (`newDisplayAsset` → imagen de oferta/tile) disponible para resolución de banners
+- El checksum del snapshot DEBE cubrir estos campos al formar parte del payload crudo
+- NO DEBE modificarse el `banner_url` por producto existente ni el comportamiento de carrito
+
+#### Scenario: Entry con layout y colores
+
+- **WHEN** un entry del `/v2/shop` trae `layout.id = "SummerBatman"` y `colors = { color1: "f86b71ff", ... }`
+- **THEN** el `ShopItem` persistido expone `layoutId` y los colores del entry
+- **AND** estos datos son recuperables para construir el modelo de visualización de secciones
+
+#### Scenario: Entry sin layout (bucket "Otros")
+
+- **WHEN** un entry llega sin `layout`
+- **THEN** se normaliza a la sección `Otros` igual que hoy
+- **AND** su tema no se usa como base del banner de otra sección

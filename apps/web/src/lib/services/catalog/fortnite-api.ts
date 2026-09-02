@@ -1,3 +1,5 @@
+import type { ShopThemeSourceColors } from '@kindstyle/shared'
+
 export interface FortniteShopItem {
   id: string
   name: string
@@ -61,11 +63,11 @@ export interface FortniteShopItem {
 export interface FortniteShopEntry {
   regularPrice: number
   finalPrice: number
-  colors: {
-    background?: string
-    textColor?: string
-    sectionBackground?: string
-  } | null
+  colors: ShopThemeSourceColors | null
+  layout?: FortniteLayoutInfo | null
+  bundle?: { name: string; info: string; image: string } | null
+  offerId?: string
+  brItems?: FortniteShopItem[]
   displayAssetPath?: string
   definition?: string
   newDisplayAsset?: {
@@ -73,9 +75,47 @@ export interface FortniteShopEntry {
     materialInstances: Array<{
       images: Record<string, string>
     }>
+    renderImages?: Array<{ image?: string } | null>
   }
   items: FortniteShopItem[]
   granted: unknown[]
+}
+
+export interface FortniteLayoutInfo {
+  id: string
+  name: string
+  index?: number
+  rank?: number
+}
+
+export interface FortniteBannerData {
+  id: string
+  devName: string
+  name: string
+  description: string | null
+  category: string | null
+  fullUsageRights?: boolean
+  images: {
+    smallIcon?: string
+    icon?: string
+  }
+}
+
+export interface FortniteBannerColorData {
+  id: string
+  color: string
+  category: string | null
+  subCategoryGroup: number | null
+}
+
+export interface FortniteBannersResponse {
+  status: number
+  data: FortniteBannerData[]
+}
+
+export interface FortniteBannerColorsResponse {
+  status: number
+  data: FortniteBannerColorData[]
 }
 
 export interface FortniteShopResponse {
@@ -131,11 +171,41 @@ export class FortniteApiClient {
     const url = new URL('/v2/shop', this.baseUrl)
     url.searchParams.set('language', language || this.language)
 
+    const data = await this.request<FortniteShopResponse>(url, 'shop')
+
+    console.log(`[FortniteAPI] Shop fetched successfully. Hash: ${data.data.hash}`)
+    console.log(`[FortniteAPI] Entries count: ${data.data.entries.length}`)
+
+    return data
+  }
+
+  async getBanners(language?: string): Promise<FortniteBannersResponse> {
+    const url = new URL('/v1/banners', this.baseUrl)
+    url.searchParams.set('language', language || this.language)
+
+    const data = await this.request<FortniteBannersResponse>(url, 'banners')
+
+    console.log(`[FortniteAPI] Banners fetched successfully. Count: ${data.data.length}`)
+
+    return data
+  }
+
+  async getBannerColors(): Promise<FortniteBannerColorsResponse> {
+    const url = new URL('/v1/banners/colors', this.baseUrl)
+
+    const data = await this.request<FortniteBannerColorsResponse>(url, 'banner colors')
+
+    console.log(`[FortniteAPI] Banner colors fetched successfully. Count: ${data.data.length}`)
+
+    return data
+  }
+
+  private async request<T>(url: URL, label: string): Promise<T> {
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), this.timeout)
 
     try {
-      console.log(`[FortniteAPI] Fetching shop from ${url.toString()}`)
+      console.log(`[FortniteAPI] Fetching ${label} from ${url.toString()}`)
 
       const response = await fetch(url.toString(), {
         method: 'GET',
@@ -166,10 +236,7 @@ export class FortniteApiClient {
         )
       }
 
-      console.log(`[FortniteAPI] Shop fetched successfully. Hash: ${data.data.hash}`)
-      console.log(`[FortniteAPI] Entries count: ${data.data.entries.length}`)
-
-      return data
+      return data as T
     } catch (error) {
       clearTimeout(timeoutId)
 

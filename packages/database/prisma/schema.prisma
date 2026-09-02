@@ -219,6 +219,8 @@ model ShopItem {
   price_vbucks     Int
   display_order    Int      @default(0)
   section          String?
+  layout_id        String?
+  theme            Json?
   offer_id         String?
   bundle_info      Json?
   featured         Boolean  @default(false)
@@ -230,6 +232,30 @@ model ShopItem {
   @@index([shop_snapshot_id])
   @@index([product_id])
   @@index([offer_id])
+  @@index([layout_id])
+}
+
+model FortniteBanner {
+  id             String   @id
+  dev_name       String?
+  name           String
+  category       String?
+  small_icon_url String?
+  icon_url       String?
+  synced_at      DateTime @default(now())
+
+  @@map("fortnite_banners")
+  @@index([category])
+}
+
+model FortniteBannerColor {
+  id                 String   @id
+  color              String
+  category           String?
+  sub_category_group Int?
+  synced_at          DateTime @default(now())
+
+  @@map("fortnite_banner_colors")
 }
 
 // ==========================================

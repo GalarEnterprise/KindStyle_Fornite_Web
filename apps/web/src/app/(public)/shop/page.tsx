@@ -1,6 +1,8 @@
 import { getLatestSnapshot } from '@/lib/services/catalog/snapshot-service'
 import { buildShopDisplayModel } from '@/lib/services/catalog/display-model'
+import { getBannerReferences } from '@/lib/services/catalog/banner-reference-service'
 import { SectionSidebar } from '@/components/shop/section-sidebar'
+import { SectionHeader } from '@/components/shop/section-header'
 import { BundleCard } from '@/components/shop/bundle-card'
 import { ProductCard } from '@/components/shop/product-card'
 import { LastUpdateBadge } from '@/components/shop/last-update-badge'
@@ -33,12 +35,14 @@ export default async function ShopPage() {
     (item) => item.product.active && item.product.visible
   )
 
-  const displaySections = buildShopDisplayModel(activeItems)
+  const bannerReferences = await getBannerReferences(activeItems)
+  const displaySections = buildShopDisplayModel(activeItems, bannerReferences)
 
   const sections = displaySections.map((s) => ({
     id: s.id,
     title: s.title,
     slug: s.slug,
+    thumbUrl: s.banner?.image ?? null,
   }))
 
   return (
@@ -69,19 +73,18 @@ export default async function ShopPage() {
                 <p className="text-gray-400 text-lg">No hay productos disponibles en la tienda de hoy.</p>
               </div>
             ) : (
-              displaySections.map((section) => (
+              displaySections.map((section, index) => (
                 <section
                   key={section.id}
                   id={`section-${section.slug}`}
                   className="mb-8 shop-section"
                 >
-                  <h2 className="mb-4 text-xl font-bold text-white flex items-center gap-2">
-                    <span className="h-5 w-1 rounded-full bg-purple-500" />
-                    {section.title}
-                    <span className="text-sm font-normal text-gray-400">
-                      ({section.entries.length})
-                    </span>
-                  </h2>
+                  <SectionHeader
+                    title={section.title}
+                    entryCount={section.entries.length}
+                    banner={section.banner}
+                    priority={index === 0}
+                  />
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     {section.entries.map((entry) => {

@@ -159,6 +159,39 @@ El sistema DEBE registrar todas las acciones de admin y proporcionar un registro
 - **WHEN** admin selects entity or action filter
 - **THEN** system displays only matching log entries
 
+### Requirement: Collapsible Admin Sidebar Navigation
+El sistema DEBE permitir al administrador retraer y volver a mostrar el sidebar de navegación del panel de administración a voluntad, de forma que el sidebar no bloquee la visualización del contenido de las secciones en ninguna pantalla.
+
+El sidebar DEBE seguir siendo accesible en ambos estados mediante un botón de toggle visible. Ninguna sección, ruta o dato del panel DEBE modificarse por este comportamiento; solo su presentación.
+
+#### Scenario: Toggle visible en ambos estados
+- **WHEN** el administrador abre cualquier sección del panel de administración en cualquier tamaño de pantalla
+- **THEN** se muestra un botón de toggle que permite retraer o volver a mostrar el sidebar
+
+#### Scenario: Sidebar oculto por defecto en móvil
+- **WHEN** el administrador accede al panel en una pantalla de ancho inferior al breakpoint grande (`< lg`, p. ej. ~375px)
+- **THEN** el sidebar NO ocupa espacio del contenido (está retraído por defecto) y el contenido de la sección usa el ancho completo de la pantalla
+
+#### Scenario: Abrir sidebar como drawer en móvil
+- **WHEN** el administrador presiona el botón de toggle en una pantalla móvil con el sidebar retraído
+- **THEN** el sidebar se muestra como drawer superpuesto sobre el contenido con un overlay oscuro que cubre el resto de la pantalla
+
+#### Scenario: Cierre del drawer en móvil
+- **WHEN** el administrador toca el overlay, presiona Escape, o navega a otra sección del panel con el drawer abierto en móvil
+- **THEN** el drawer se cierra y el contenido vuelve a ocupar el ancho completo
+
+#### Scenario: Retraer sidebar en desktop
+- **WHEN** el administrador presiona el botón de toggle en una pantalla grande (`≥ lg`) con el sidebar visible
+- **THEN** el sidebar se retrae por completo y el contenido ocupa el ancho completo; al presionar de nuevo el toggle el sidebar se muestra otra vez
+
+#### Scenario: Persistencia del estado de retención
+- **WHEN** el administrador retrae o muestra el sidebar en una pantalla grande y recarga la página o navega entre secciones
+- **THEN** el sidebar conserva el último estado elegido por el administrador (persistido por navegador, p. ej. localStorage)
+
+#### Scenario: Estado inicial en móvil no afecta desktop
+- **WHEN** el administrador abre el panel en un dispositivo móvil
+- **THEN** el drawer inicia cerrado independientemente del estado persistido en escritorio
+
 ## Payments Panel
 
 Ruta: `/admin/payments`
