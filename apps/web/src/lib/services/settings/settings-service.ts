@@ -17,7 +17,7 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   friendship_period_hours: '48',
   max_concurrent_sessions: '2',
   maintenance_mode: 'false',
-  whatsapp_number: '+523191033181',
+  whatsapp_number: '+523531022207',
   email_from: 'noreply@kindstyle.com',
 }
 

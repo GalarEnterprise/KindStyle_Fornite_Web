@@ -18,7 +18,28 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 }
 
 export function RequestList() {
-  const { requests, isLoading } = useRequests()
+  const { requests, isLoading, refresh } = useRequests()
+
+  async function handleDelete(id: string, requestNumber: string, e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    const confirmed = window.confirm(
+      `¿Seguro que deseas eliminar la solicitud ${requestNumber}? Esta acción no se puede deshacer.`
+    )
+    if (!confirmed) return
+
+    try {
+      const res = await fetch(`/api/requests/${id}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (data.success) {
+        refresh()
+      } else {
+        window.alert(data.error?.message || 'Error al eliminar la solicitud')
+      }
+    } catch {
+      window.alert('Error de conexión')
+    }
+  }
 
   if (isLoading) {
     return (
@@ -56,9 +77,25 @@ export function RequestList() {
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="font-mono text-sm font-bold text-white">{request.requestNumber}</span>
-              <span className={`rounded-full px-3 py-0.5 text-xs font-medium ${status.color}`}>
-                {status.label}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className={`rounded-full px-3 py-0.5 text-xs font-medium ${status.color}`}>
+                  {status.label}
+                </span>
+                <button
+                  onClick={(e) => handleDelete(request.id, request.requestNumber, e)}
+                  aria-label={`Eliminar solicitud ${request.requestNumber}`}
+                  className="rounded-md border border-gray-700 p-1.5 text-gray-400 transition hover:border-red-500 hover:text-red-400"
+                >
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
+                </button>
+              </div>
             </div>
             <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-sm">
               <span className="text-gray-400">

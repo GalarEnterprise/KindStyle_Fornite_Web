@@ -1,4 +1,4 @@
-const DEFAULT_WHATSAPP_NUMBER = '+523191033181'
+const DEFAULT_WHATSAPP_NUMBER = '+523531022207'
 
 export interface RequestMessageData {
   requestNumber: string

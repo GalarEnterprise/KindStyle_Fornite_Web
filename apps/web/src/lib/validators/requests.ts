@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const CreateRequestSchema = z.object({
   note: z.string().max(500, 'La nota no puede exceder 500 caracteres').optional(),
+  paymentMethod: z.enum(['TRANSFER', 'OXXO']).default('TRANSFER'),
 })
 
 export const RequestIdSchema = z.object({

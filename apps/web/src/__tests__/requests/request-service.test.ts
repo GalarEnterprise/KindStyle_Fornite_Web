@@ -5,7 +5,7 @@ vi.mock('@/lib/db/client', () => ({
     user: { findUnique: vi.fn() },
     cartItem: { findMany: vi.fn(), deleteMany: vi.fn() },
     product: { findMany: vi.fn() },
-    request: { count: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), findMany: vi.fn(), update: vi.fn(), create: vi.fn() },
+    request: { count: vi.fn(), findUnique: vi.fn(), findFirst: vi.fn(), findMany: vi.fn(), update: vi.fn(), create: vi.fn(), delete: vi.fn() },
     requestItem: { createMany: vi.fn() },
     currencySetting: { findFirst: vi.fn() },
     $transaction: vi.fn(),
@@ -16,6 +16,7 @@ import { db } from '@/lib/db/client'
 import {
   generateRequestNumber,
   markWhatsappOpened,
+  deleteRequest,
 } from '@/lib/services/requests/request-service'
 
 const mockDb = vi.mocked(db, true)
@@ -109,5 +110,44 @@ describe('markWhatsappOpened', () => {
       where: { id: 'req-1' },
       data: expect.objectContaining({ status: 'WHATSAPP_OPENED' }),
     })
+  })
+})
+
+describe('deleteRequest', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('elimina una solicitud propia y devuelve éxito', async () => {
+    mockDb.request.findFirst.mockResolvedValue({
+      id: 'req-1',
+      user_id: 'user-1',
+    } as never)
+    mockDb.request.delete.mockResolvedValue({ id: 'req-1' } as never)
+
+    const result = await deleteRequest('user-1', 'req-1')
+
+    expect(result.success).toBe(true)
+    expect(mockDb.request.delete).toHaveBeenCalledWith({ where: { id: 'req-1' } })
+  })
+
+  it('no elimina una solicitud ajena (404)', async () => {
+    mockDb.request.findFirst.mockResolvedValue(null)
+
+    const result = await deleteRequest('user-1', 'req-ajena')
+
+    expect(result.success).toBe(false)
+    if (!result.success) expect(result.error.code).toBe('REQUEST_NOT_FOUND')
+    expect(mockDb.request.delete).not.toHaveBeenCalled()
+  })
+
+  it('no elimina una solicitud inexistente (404)', async () => {
+    mockDb.request.findFirst.mockResolvedValue(null)
+
+    const result = await deleteRequest('user-1', 'no-existe')
+
+    expect(result.success).toBe(false)
+    if (!result.success) expect(result.error.code).toBe('REQUEST_NOT_FOUND')
+    expect(mockDb.request.delete).not.toHaveBeenCalled()
   })
 })

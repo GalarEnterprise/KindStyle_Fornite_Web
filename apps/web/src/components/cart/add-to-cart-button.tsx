@@ -15,7 +15,7 @@ interface AddToCartButtonProps {
 }
 
 export function AddToCartButton({ productId, productName, productType }: AddToCartButtonProps) {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, isLoading } = useAuth()
   const { addItem } = useCart()
   const router = useRouter()
 
@@ -45,8 +45,13 @@ export function AddToCartButton({ productId, productName, productType }: AddToCa
   }
 
   function handleClick() {
+    if (isLoading) return
     if (!isAuthenticated) {
-      router.push('/login')
+      if (SPECIAL_TYPES.includes(productType)) {
+        router.push('/login')
+      } else {
+        router.push(`/login?add=${encodeURIComponent(`productId:${productId}`)}`)
+      }
       return
     }
     if (SPECIAL_TYPES.includes(productType)) {

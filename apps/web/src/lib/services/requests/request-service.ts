@@ -7,6 +7,12 @@ import { sendToAdmin } from '@/lib/services/notification/notification-service'
 const DEFAULT_VBUCKS_RATE = 7.5
 const MAX_NUMBER_RETRIES = 5
 
+interface CartBundleComponent {
+  productId: string
+  name: string
+  slug: string
+}
+
 export interface RequestSummary {
   id: string
   requestNumber: string
@@ -18,6 +24,7 @@ export interface RequestSummary {
 }
 
 export interface RequestDetail extends RequestSummary {
+  paymentMethod: 'TRANSFER' | 'OXXO'
   items: Array<{
     id: string
     productName: string
@@ -62,7 +69,7 @@ export async function generateRequestNumber(
   throw new Error('No se pudo generar un número de solicitud único tras varios intentos')
 }
 
-export async function createRequestFromCart(userId: string) {
+export async function createRequestFromCart(userId: string, paymentMethod: 'TRANSFER' | 'OXXO' = 'TRANSFER') {
   const user = await db.user.findUnique({ where: { id: userId }, select: { nickname: true } })
 
   if (!user?.nickname) {
@@ -88,12 +95,14 @@ export async function createRequestFromCart(userId: string) {
   }
 
   const products = await db.product.findMany({
-    where: { id: { in: cartItems.map((item) => item.product_id) } },
+    where: { id: { in: cartItems.map((item) => item.product_id).filter((id): id is string => Boolean(id)) } },
   })
   const productsById = new Map(products.map((product) => [product.id, product]))
 
   for (const item of cartItems) {
-    const product = productsById.get(item.product_id)
+    if (item.type === 'BUNDLE') continue
+
+    const product = productsById.get(item.product_id ?? '')
     if (!product || !product.active || !product.visible) {
       return {
         success: false as const,
@@ -111,8 +120,11 @@ export async function createRequestFromCart(userId: string) {
       const requestNumber = await generateRequestNumber(tx)
 
       const totalVbucks = cartItems.reduce((acc, item) => {
-        const product = productsById.get(item.product_id)!
-        return acc + product.price_vbucks * item.quantity
+        if (item.type === 'BUNDLE') {
+          return acc + (item.bundle_price_vbucks ?? 0) * item.quantity
+        }
+        const product = productsById.get(item.product_id ?? '')
+        return acc + (product?.price_vbucks ?? 0) * item.quantity
       }, 0)
       const totalMxn = totalVbucks * (rate / 100)
 
@@ -126,20 +138,44 @@ export async function createRequestFromCart(userId: string) {
         },
       })
 
-      await tx.requestItem.createMany({
-        data: cartItems.map((item) => {
-          const product = productsById.get(item.product_id)!
-          return {
-            request_id: request.id,
-            product_id: product.id,
-            sku: product.internal_sku,
-            product_name_snapshot: product.name,
-            fortnite_product_id: product.fortnite_product_id,
-            fortnite_offer_id: product.fortnite_offer_id,
-            price_vbucks_snapshot: product.price_vbucks,
-            quantity: item.quantity,
+      const requestItems: Prisma.RequestItemCreateManyInput[] = []
+      for (const item of cartItems) {
+        if (item.type === 'BUNDLE') {
+          const components = (item.bundle_components ?? []) as unknown as CartBundleComponent[]
+          for (const component of components) {
+            const product = productsById.get(component.productId)
+            if (!product) continue
+            requestItems.push({
+              request_id: request.id,
+              product_id: product.id,
+              sku: product.internal_sku,
+              product_name_snapshot: product.name,
+              fortnite_product_id: product.fortnite_product_id,
+              fortnite_offer_id: product.fortnite_offer_id ?? item.bundle_offer_id ?? undefined,
+              price_vbucks_snapshot: product.price_vbucks,
+              quantity: item.quantity,
+              fulfillment_type: 'bundle',
+            })
           }
-        }),
+          continue
+        }
+
+        const product = productsById.get(item.product_id ?? '')
+        if (!product) continue
+        requestItems.push({
+          request_id: request.id,
+          product_id: product.id,
+          sku: product.internal_sku,
+          product_name_snapshot: product.name,
+          fortnite_product_id: product.fortnite_product_id,
+          fortnite_offer_id: product.fortnite_offer_id ?? undefined,
+          price_vbucks_snapshot: product.price_vbucks,
+          quantity: item.quantity,
+        })
+      }
+
+      await tx.requestItem.createMany({
+        data: requestItems,
       })
 
       await tx.cartItem.deleteMany({ where: { user_id: userId } })
@@ -156,7 +192,7 @@ export async function createRequestFromCart(userId: string) {
     }
 
     try {
-      await createPayment(userId, result.id, 'TRANSFER')
+      await createPayment(userId, result.id, paymentMethod)
     } catch (error) {
       console.error('[request-service.createRequestFromCart] Error creating payment:', error)
     }
@@ -218,13 +254,14 @@ export async function getUserRequests(userId: string): Promise<RequestSummary[]>
 export async function getRequestById(userId: string, requestId: string): Promise<RequestDetail | null> {
   const request = await db.request.findFirst({
     where: { id: requestId, user_id: userId },
-    include: { items: true },
+    include: { items: true, payments: { take: 1, orderBy: { created_at: 'desc' } } },
   })
 
   if (!request) return null
 
   return {
     ...toSummary(request),
+    paymentMethod: request.payments[0]?.method ?? 'TRANSFER',
     items: request.items.map((item) => ({
       id: item.id,
       productName: item.product_name_snapshot,
@@ -233,6 +270,25 @@ export async function getRequestById(userId: string, requestId: string): Promise
       quantity: item.quantity,
     })),
   }
+}
+
+export async function deleteRequest(userId: string, requestId: string) {
+  const request = await db.request.findFirst({
+    where: { id: requestId, user_id: userId },
+  })
+
+  if (!request) {
+    return {
+      success: false as const,
+      error: { code: 'REQUEST_NOT_FOUND', message: 'La solicitud no existe' },
+    }
+  }
+
+  await db.request.delete({
+    where: { id: requestId },
+  })
+
+  return { success: true as const, data: { id: requestId } }
 }
 
 export async function markWhatsappOpened(userId: string, requestId: string) {

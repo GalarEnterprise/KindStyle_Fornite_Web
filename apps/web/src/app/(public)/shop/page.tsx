@@ -5,6 +5,7 @@ import { BundleCard } from '@/components/shop/bundle-card'
 import { ProductCard } from '@/components/shop/product-card'
 import { LastUpdateBadge } from '@/components/shop/last-update-badge'
 import { ProductGridSkeleton } from '@/components/shop/product-grid'
+import { PostLoginHandler } from '@/components/shop/post-login-handler'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,6 +43,7 @@ export default async function ShopPage() {
 
   return (
     <div className="min-h-screen bg-gray-950">
+      <PostLoginHandler />
       <div className="mx-auto max-w-7xl px-4 py-8">
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -58,61 +60,64 @@ export default async function ShopPage() {
           <LastUpdateBadge lastUpdated={snapshot.fetched_at.toISOString()} />
         </div>
 
-        <SectionSidebar sections={sections} />
+        <div className="lg:flex lg:items-start lg:gap-8">
+          <SectionSidebar sections={sections} />
 
-        <div className="lg:ml-56">
-          {displaySections.length === 0 ? (
-            <div className="text-center py-16">
-              <p className="text-gray-400 text-lg">No hay productos disponibles en la tienda de hoy.</p>
-            </div>
-          ) : (
-            displaySections.map((section) => (
-              <section
-                key={section.id}
-                id={`section-${section.slug}`}
-                className="mb-8 shop-section"
-              >
-                <h2 className="mb-4 text-xl font-bold text-white flex items-center gap-2">
-                  <span className="h-5 w-1 rounded-full bg-purple-500" />
-                  {section.title}
-                  <span className="text-sm font-normal text-gray-400">
-                    ({section.entries.length})
-                  </span>
-                </h2>
+          <div className="flex-1 min-w-0">
+            {displaySections.length === 0 ? (
+              <div className="text-center py-16">
+                <p className="text-gray-400 text-lg">No hay productos disponibles en la tienda de hoy.</p>
+              </div>
+            ) : (
+              displaySections.map((section) => (
+                <section
+                  key={section.id}
+                  id={`section-${section.slug}`}
+                  className="mb-8 shop-section"
+                >
+                  <h2 className="mb-4 text-xl font-bold text-white flex items-center gap-2">
+                    <span className="h-5 w-1 rounded-full bg-purple-500" />
+                    {section.title}
+                    <span className="text-sm font-normal text-gray-400">
+                      ({section.entries.length})
+                    </span>
+                  </h2>
 
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {section.entries.map((entry) => {
-                    if (entry.type === 'bundle') {
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                    {section.entries.map((entry) => {
+                      if (entry.type === 'bundle') {
+                        return (
+                          <BundleCard
+                            key={entry.id}
+                            offerId={entry.offerId}
+                            name={entry.name}
+                            imageUrl={entry.imageUrl}
+                            priceVbucks={entry.priceVbucks}
+                            components={entry.components}
+                          />
+                        )
+                      }
+
                       return (
-                        <BundleCard
+                        <ProductCard
                           key={entry.id}
-                          name={entry.name}
-                          imageUrl={entry.imageUrl}
-                          priceVbucks={entry.priceVbucks}
-                          components={entry.components}
+                          productId={entry.product.id}
+                          name={entry.product.name}
+                          priceVbucks={entry.product.price_vbucks}
+                          priceMxn={Number(entry.product.price_vbucks) * (vbucksRate / 100)}
+                          imageUrl={entry.product.image_url}
+                          iconUrl={entry.product.icon_url}
+                          rarity={entry.product.rarity}
+                          type={entry.product.type}
+                          visible={entry.product.visible}
                         />
                       )
-                    }
-
-                    return (
-                      <ProductCard
-                        key={entry.id}
-                        productId={entry.product.id}
-                        name={entry.product.name}
-                        priceVbucks={entry.product.price_vbucks}
-                        priceMxn={Number(entry.product.price_vbucks) * (vbucksRate / 100)}
-                        imageUrl={entry.product.image_url}
-                        iconUrl={entry.product.icon_url}
-                        rarity={entry.product.rarity}
-                        type={entry.product.type}
-                        visible={entry.product.visible}
-                      />
-                    )
-                  })}
-                </div>
-              </section>
-            ))
-          )}
+                    })}
+                  </div>
+                </section>
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -241,15 +241,20 @@ enum CartItemType {
   VBucks
   CREW
   BATTLE_PASS
+  BUNDLE
 }
 
 model CartItem {
   id                    String      @id @default(uuid())
   user_id               String
-  product_id            String
+  product_id            String?
   quantity              Int         @default(1)
   type                  CartItemType
   encrypted_credentials Json?
+  bundle_offer_id       String?
+  bundle_name           String?
+  bundle_price_vbucks   Int?
+  bundle_components     Json?
   created_at            DateTime    @default(now())
   updated_at            DateTime    @updatedAt
 
@@ -257,6 +262,7 @@ model CartItem {
 
   @@unique([user_id, product_id])
   @@index([user_id])
+  @@index([user_id, bundle_offer_id])
 }
 
 // ==========================================

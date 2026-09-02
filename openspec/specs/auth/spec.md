@@ -176,3 +176,42 @@ El sistema DEBE implementar las siguientes medidas de seguridad:
 - Tokens JWT firmados con clave secreta
 - Cookies httpOnly para prevenir XSS
 - Rate limiting para prevenir brute force
+
+### REQ-AUTH-014: Destino post-autenticación siempre a la tienda
+
+El sistema DEBE, tras una autenticación exitosa, redirigir al usuario a `/shop` y NUNCA a `/account`, sin importar desde dónde se inició el flujo (carrito, login manual o primer login).
+
+- El flujo de agregar al carrito sin sesión DEBE dirigir al login conservando la intención de agregado (`add`).
+- Tras una autenticación exitosa en cualquier escenario, el sistema DEBE redirigir a `/shop` y NO a `/account`.
+- El login manual a `/login` sin intención de agregado DEBE redirigir también a `/shop`.
+- En primer login (`isFirstLogin`), el sistema DEBE pasar por `/nickname` y, al completarlo, navegar a `/shop`.
+- El sistema DEBE mostrar un aviso "Validación Exitosa" sobre la tienda para que el usuario sepa que ya tiene sesión.
+- El aviso DEBE mostrarse en `/shop` y NO DEBE implicar una página intermedia ni un delay artificial.
+
+#### Scenario: Login desde el carrito
+- **WHEN** un usuario sin sesión intenta agregar un artículo, es redirigido a `/login`, y completa la autenticación con éxito
+- **THEN** el sistema lo redirige a `/shop`, agrega el artículo pendiente y muestra el panel "Validación Exitosa", permitiendo continuar agregando artículos
+
+#### Scenario: Primer login desde el carrito
+- **WHEN** un usuario se autentica por primera vez desde el flujo del carrito
+- **THEN** el sistema lo dirige primero a configurar su apodo (`/nickname`) y, al completarlo, va a `/shop` con la confirmación "Validación Exitosa" y el agregado pendiente
+
+#### Scenario: Login manual
+- **WHEN** un usuario accede a `/login` y se autentica con éxito sin intención de agregado
+- **THEN** el sistema redirige a `/shop` y muestra el aviso "Validación Exitosa" sin agregar ningún artículo
+
+### REQ-AUTH-015: Navegación del botón de usuario
+
+El sistema DEBE hacer que el botón "Mi cuenta" del header navegue a una ruta existente del panel de usuario.
+
+- El botón "Mi cuenta" del header NO DEBE apuntar a una ruta inexistente que produzca un error 404.
+- El botón DEBE llevar al usuario a una ruta válida de su panel de usuario (por defecto `/account`).
+- La navegación DEBE funcionar tanto para usuarios ya registrados como para usuarios recién autenticados.
+
+#### Scenario: Usuario registrado abre su panel
+- **WHEN** un usuario autenticado hace clic en el botón "Mi cuenta" del header
+- **THEN** el sistema navega a `/account` y muestra el panel de usuario sin errores (no 404)
+
+#### Scenario: Botón visible solo con sesión
+- **WHEN** el usuario no tiene sesión activa
+- **THEN** el botón "Mi cuenta" NO se muestra (se muestra la opción de iniciar sesión)

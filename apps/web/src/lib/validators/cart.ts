@@ -8,11 +8,17 @@ export const CredentialsSchema = z.object({
   epicPassword: z.string().min(1, 'Contraseña de Epic es requerida'),
 })
 
-export const AddToCartSchema = z.object({
-  productId: z.string().uuid('productId debe ser un UUID válido'),
-  quantity: z.number().int().min(1, 'La cantidad mínima es 1').max(10, 'La cantidad máxima es 10').default(1),
-  credentials: CredentialsSchema.optional(),
-})
+export const AddToCartSchema = z
+  .object({
+    productId: z.string().uuid('productId debe ser un UUID válido').optional(),
+    offerId: z.string().min(1, 'offerId es requerido').optional(),
+    quantity: z.number().int().min(1, 'La cantidad mínima es 1').max(10, 'La cantidad máxima es 10').default(1),
+    credentials: CredentialsSchema.optional(),
+  })
+  .refine((data) => Boolean(data.productId) !== Boolean(data.offerId), {
+    message: 'Debe proporcionar productId o offerId, no ambos ni ninguno',
+    path: ['productId'],
+  })
 
 export const UpdateCartItemSchema = z.object({
   quantity: z.number().int().min(1, 'La cantidad mínima es 1').max(10, 'La cantidad máxima es 10').optional(),

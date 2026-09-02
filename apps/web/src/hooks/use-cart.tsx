@@ -14,13 +14,23 @@ export interface CartProduct {
   giftable: string
 }
 
+export interface CartBundleComponent {
+  productId: string
+  name: string
+  slug: string
+}
+
 export interface CartItem {
   id: string
-  productId: string
+  productId: string | null
   quantity: number
   type: string
   createdAt: string
-  product: CartProduct
+  bundleOfferId: string | null
+  bundleName: string | null
+  bundlePriceVbucks: number | null
+  bundleComponents: CartBundleComponent[] | null
+  product: CartProduct | null
 }
 
 export interface CredentialsPayload {
@@ -35,6 +45,7 @@ interface CartContextType {
   isAuthenticated: boolean
   refresh: () => Promise<void>
   addItem: (productId: string, quantity?: number, credentials?: CredentialsPayload) => Promise<{ success: boolean; error?: string }>
+  addBundleItem: (offerId: string, quantity?: number) => Promise<{ success: boolean; error?: string }>
   updateItem: (itemId: string, input: { quantity?: number; credentials?: CredentialsPayload }) => Promise<{ success: boolean; error?: string }>
   removeItem: (itemId: string) => Promise<{ success: boolean; error?: string }>
 }
@@ -46,6 +57,7 @@ const CartContext = createContext<CartContextType>({
   isAuthenticated: false,
   refresh: async () => {},
   addItem: async () => ({ success: false }),
+  addBundleItem: async () => ({ success: false }),
   updateItem: async () => ({ success: false }),
   removeItem: async () => ({ success: false }),
 })
@@ -128,6 +140,29 @@ export function CartProvider({
     [refresh]
   )
 
+  const addBundleItem = useCallback(
+    async (offerId: string, quantity = 1) => {
+      try {
+        const res = await fetch('/api/cart', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ offerId, quantity }),
+        })
+        const data = await res.json()
+
+        if (!data.success) {
+          return { success: false, error: data.error?.message ?? 'Error al agregar el bundle al carrito' }
+        }
+
+        await refresh()
+        return { success: true }
+      } catch {
+        return { success: false, error: 'Error de conexión' }
+      }
+    },
+    [refresh]
+  )
+
   const updateItem = useCallback(
     async (itemId: string, input: { quantity?: number; credentials?: CredentialsPayload }) => {
       try {
@@ -182,7 +217,7 @@ export function CartProvider({
 
   return (
     <CartContext.Provider
-      value={{ items, count, isLoading, isAuthenticated, refresh, addItem, updateItem, removeItem }}
+      value={{ items, count, isLoading, isAuthenticated, refresh, addItem, addBundleItem, updateItem, removeItem }}
     >
       {children}
     </CartContext.Provider>

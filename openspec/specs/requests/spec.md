@@ -180,3 +180,44 @@ El sistema DEBE mostrar tras crear la solicitud una vista de confirmación con: 
 
 - El CTA "Solicitar productos" del carrito DEBE quedar habilitado cuando hay items.
 - El sistema DEBE mostrar el historial de solicitudes en `/account/requests` con su estado visible.
+
+### REQ-REQ-010: Eliminar solicitud propia
+
+El sistema DEBE permitir al usuario autenticado eliminar una de sus propias solicitudes desde su panel (`/account/requests`).
+
+- El sistema DEBE exponer `DELETE /api/requests/[id]` para eliminar una solicitud.
+- DEBE requerir autenticación válida (401 si no).
+- DEBE responder 404 si la solicitud no existe o no pertenece al usuario autenticado.
+- La eliminación DEBE borrar la solicitud y sus registros dependientes (items) de forma consistente.
+- El panel de usuario DEBE ofrecer un botón de eliminar (bote de basura) por cada solicitud listada.
+- El sistema DEBE pedir confirmación antes de eliminar.
+- Tras eliminar, la lista de solicitudes DEBE actualizarse y la solicitud eliminada NO DEBE aparecer más.
+
+#### Scenario: Eliminar solicitud propia
+- **WHEN** un usuario autenticado confirma la eliminación de una solicitud propia desde su panel
+- **THEN** el sistema elimina la solicitud y sus items, actualiza la lista y ya no la muestra
+
+#### Scenario: Eliminar solicitud ajena
+- **WHEN** un usuario intenta eliminar una solicitud que pertenece a otro usuario
+- **THEN** el sistema responde 404 (no expone la existencia de la solicitud)
+
+#### Scenario: Eliminar solicitud inexistente
+- **WHEN** un usuario intenta eliminar una solicitud con un id que no existe
+- **THEN** el sistema responde 404
+
+### REQ-REQ-011: Copiado fiable de solicitudes
+
+El sistema DEBE copiar el texto de la solicitud al portapapeles de forma fiable desde los botones "Copiar solicitud", sin depender únicamente de la API de portapapeles que falla en contextos no seguros.
+
+- El botón "Copiar solicitud" DEBE copiar el mensaje formateado de la solicitud al portapapeles.
+- El copiado DEBE funcionar en contextos no seguros (HTTP/LAN) además de contextos seguros (HTTPS/localhost).
+- El sistema DEBE mostrar feedback visual ("✓ Solicitud copiada") cuando el copiado tiene éxito.
+- Si el copiado falla, el sistema DEBE informar al usuario en lugar de fallar silenciosamente.
+
+#### Scenario: Copiar solicitud con éxito
+- **WHEN** un usuario hace clic en "Copiar solicitud"
+- **THEN** el mensaje formateado se copia al portapapeles y el sistema muestra "✓ Solicitud copiada"
+
+#### Scenario: Copiar solicitud en contexto no seguro
+- **WHEN** un usuario hace clic en "Copiar solicitud" desde una conexión HTTP/LAN donde `navigator.clipboard` no está disponible
+- **THEN** el sistema usa el mecanismo de respaldo para copiar igualmente el texto y muestra la confirmación

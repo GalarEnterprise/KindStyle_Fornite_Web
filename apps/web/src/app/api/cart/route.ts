@@ -54,9 +54,11 @@ export async function POST(request: NextRequest) {
 
     if (!result.success) {
       const status =
-        result.error.code === 'PRODUCT_NOT_FOUND'
+        result.error.code === 'PRODUCT_NOT_FOUND' || result.error.code === 'BUNDLE_NOT_FOUND'
           ? 404
-          : result.error.code === 'CREDENTIALS_REQUIRED'
+          : result.error.code === 'CREDENTIALS_REQUIRED' ||
+              result.error.code === 'NOT_GIFTABLE' ||
+              result.error.code === 'VALIDATION_ERROR'
             ? 422
             : 400
       return NextResponse.json(result, { status })

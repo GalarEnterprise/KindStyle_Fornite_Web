@@ -4,6 +4,7 @@ import { useState } from 'react'
 import useSWR from 'swr'
 import { AdminPageHeader } from '@/components/admin/admin-page-header'
 import { AdminDataTable } from '@/components/admin/admin-data-table'
+import { copyToClipboard } from '@/lib/utils/copy'
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json())
 
@@ -42,7 +43,7 @@ export default function AdminRequestsPage() {
   const total: number = data?.data?.total ?? 0
 
   function handleCopy(id: string) {
-    navigator.clipboard.writeText(id)
+    copyToClipboard(id)
   }
 
   return (

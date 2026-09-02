@@ -1,18 +1,53 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/use-auth'
+import { useCart } from '@/hooks/use-cart'
 
 interface BundleCardProps {
+  offerId: string | null
   name: string
   imageUrl: string | null
   priceVbucks: number
   components: string[]
 }
 
-export function BundleCard({ name, imageUrl, priceVbucks, components }: BundleCardProps) {
+export function BundleCard({ offerId, name, imageUrl, priceVbucks, components }: BundleCardProps) {
   const [expanded, setExpanded] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [added, setAdded] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const { isAuthenticated, isLoading } = useAuth()
+  const { addBundleItem } = useCart()
+  const router = useRouter()
+
   const vbucksRate = 7.5
   const priceMxn = priceVbucks * (vbucksRate / 100)
+
+  async function handleAdd() {
+    setError(null)
+    if (isLoading) return
+    if (!isAuthenticated) {
+      router.push(offerId ? `/login?add=${encodeURIComponent(`bundle:${offerId}`)}` : '/login')
+      return
+    }
+    if (!offerId) {
+      setError('Este bundle no está disponible para agregar')
+      return
+    }
+
+    setLoading(true)
+    const result = await addBundleItem(offerId, 1)
+    setLoading(false)
+
+    if (result.success) {
+      setAdded(true)
+      setTimeout(() => setAdded(false), 2000)
+    } else {
+      setError(result.error ?? 'Error al agregar al carrito')
+    }
+  }
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-lg bg-gray-900 border border-gray-700 transition-all hover:border-purple-500 hover:shadow-lg hover:shadow-purple-500/20">
@@ -81,13 +116,21 @@ export function BundleCard({ name, imageUrl, priceVbucks, components }: BundleCa
             ))}
           </ul>
         )}
+
+        {error && <p className="mt-2 text-xs text-red-400">{error}</p>}
       </div>
 
-      <button className="mx-3 mb-3 rounded-md bg-purple-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-purple-700">
+      <button
+        onClick={handleAdd}
+        disabled={loading || !offerId}
+        className={`mx-3 mb-3 rounded-md px-3 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+          added ? 'bg-green-600' : 'bg-purple-600 hover:bg-purple-700'
+        }`}
+      >
         <svg className="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
-        Agregar
+        {added ? '✓ Agregado' : loading ? 'Agregando...' : 'Agregar'}
       </button>
     </div>
   )

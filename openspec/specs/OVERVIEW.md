@@ -26,7 +26,7 @@ Tienda online especializada en productos de Fortnite con sistema de gifting manu
 | Moneda base | MXN |
 | Monedas soportadas | USD, MXN, COP, ARS, PEN, EUR |
 | Conversión | Dinámica vs MXN |
-| WhatsApp | +52 3191033181 |
+| WhatsApp | +52 3531022207 |
 | Email contacto | @store.kindstyles |
 | Colores | Morado Fortnite + blanco/negro |
 

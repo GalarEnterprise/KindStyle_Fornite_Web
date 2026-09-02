@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useCart, type CartItem } from '@/hooks/use-cart'
 import { CredentialsModal } from '@/components/cart/credentials-modal'
+import { PAYMENT_METHODS } from '@/lib/config/payment-info'
 
 const TYPE_LABELS: Record<string, string> = {
   GIFT: 'Regalo',
   VBucks: 'V-Bucks',
   CREW: 'Crew',
   BATTLE_PASS: 'Pase de Batalla',
+  BUNDLE: 'Bundle',
 }
 
 export function CartView() {
@@ -21,13 +23,18 @@ export function CartView() {
   const [saving, setSaving] = useState(false)
   const [creatingRequest, setCreatingRequest] = useState(false)
   const [requestError, setRequestError] = useState<string | null>(null)
+  const [paymentMethod, setPaymentMethod] = useState<'TRANSFER' | 'OXXO'>('TRANSFER')
 
   async function handleCreateRequest() {
     setCreatingRequest(true)
     setRequestError(null)
 
     try {
-      const res = await fetch('/api/requests', { method: 'POST' })
+      const res = await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentMethod }),
+      })
       const data = await res.json()
 
       if (!data.success) {
@@ -45,11 +52,14 @@ export function CartView() {
   }
 
   const SPECIAL_TYPES = ['VBucks', 'CREW', 'BATTLE_PASS']
-  const totalMxn = items.reduce(
-    (acc, item) => acc + (item.product.adminPriceMxn ?? item.product.priceVbucks * 0.075) * item.quantity,
-    0
-  )
-  const totalVbucks = items.reduce((acc, item) => acc + item.product.priceVbucks * item.quantity, 0)
+  const itemPriceVbucks = (item: CartItem) =>
+    item.type === 'BUNDLE' ? (item.bundlePriceVbucks ?? 0) : (item.product?.priceVbucks ?? 0)
+  const itemPriceMxn = (item: CartItem) =>
+    item.type === 'BUNDLE'
+      ? (item.bundlePriceVbucks ?? 0) * 0.075
+      : ((item.product?.adminPriceMxn ?? (item.product?.priceVbucks ?? 0) * 0.075) as number)
+  const totalMxn = items.reduce((acc, item) => acc + itemPriceMxn(item) * item.quantity, 0)
+  const totalVbucks = items.reduce((acc, item) => acc + itemPriceVbucks(item) * item.quantity, 0)
 
   async function handleQuantity(item: CartItem, delta: number) {
     const next = Math.min(10, Math.max(1, item.quantity + delta))
@@ -123,47 +133,73 @@ export function CartView() {
             key={item.id}
             className="flex flex-col gap-3 rounded-lg border border-gray-800 bg-gray-900 p-4 sm:flex-row sm:items-center"
           >
-            <div className="flex flex-1 items-center gap-4">
-              <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-800">
-                {(item.product.imageUrl || item.product.iconUrl) && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={item.product.imageUrl ?? item.product.iconUrl ?? ''}
-                    alt={item.product.name}
-                    className="h-full w-full object-cover"
-                  />
-                )}
-              </div>
+<div className="flex flex-1 items-center gap-4">
+                <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-gray-800">
+                  {item.type === 'BUNDLE'
+                    ? (item.product?.imageUrl ?? item.product?.iconUrl) && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.product?.imageUrl ?? item.product?.iconUrl ?? ''}
+                          alt={item.bundleName ?? 'Bundle'}
+                          className="h-full w-full object-cover"
+                        />
+                      )
+                    : (item.product?.imageUrl || item.product?.iconUrl) && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.product?.imageUrl ?? item.product?.iconUrl ?? ''}
+                          alt={item.product?.name ?? ''}
+                          className="h-full w-full object-cover"
+                        />
+                      )}
+                </div>
 
-              <div className="min-w-0 flex-1">
-                <h2 className="truncate text-sm font-semibold text-white">{item.product.name}</h2>
-                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                  <span className="font-bold text-yellow-400">
-                    {item.product.priceVbucks.toLocaleString('es-MX')} V-Bucks
-                  </span>
-                  <span className="text-gray-400">
-                    ${(item.product.adminPriceMxn ?? item.product.priceVbucks * 0.075).toFixed(2)} MXN c/u
-                  </span>
-                  <span className="rounded-full bg-gray-800 px-2 py-0.5 text-gray-300">
-                    {TYPE_LABELS[item.type] ?? item.type}
-                  </span>
-                  {item.product.giftable === 'GIFTABLE' && (
-                    <span className="rounded-full bg-green-900/40 px-2 py-0.5 text-green-400">Regalable</span>
+                <div className="min-w-0 flex-1">
+                  <h2 className="truncate text-sm font-semibold text-white">
+                    {item.type === 'BUNDLE' ? (item.bundleName ?? 'Bundle') : (item.product?.name ?? '')}
+                  </h2>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                    <span className="font-bold text-yellow-400">
+                      {itemPriceVbucks(item).toLocaleString('es-MX')} V-Bucks
+                    </span>
+                    <span className="text-gray-400">
+                      ${itemPriceMxn(item).toFixed(2)} MXN c/u
+                    </span>
+                    <span className="rounded-full bg-gray-800 px-2 py-0.5 text-gray-300">
+                      {TYPE_LABELS[item.type] ?? item.type}
+                    </span>
+                    {item.type === 'BUNDLE' && (
+                      <span className="rounded-full bg-purple-900/40 px-2 py-0.5 text-purple-400">
+                        Paquete completo
+                      </span>
+                    )}
+                    {item.product?.giftable === 'GIFTABLE' && (
+                      <span className="rounded-full bg-green-900/40 px-2 py-0.5 text-green-400">Regalable</span>
+                    )}
+                  </div>
+                  {item.type === 'BUNDLE' && (item.bundleComponents?.length ?? 0) > 0 && (
+                    <ul className="mt-1.5 space-y-0.5 text-xs text-gray-400">
+                      {item.bundleComponents!.map((component, index) => (
+                        <li key={index} className="flex items-center gap-1">
+                          <span className="text-purple-400">•</span>
+                          {component.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {SPECIAL_TYPES.includes(item.type) && (
+                    <button
+                      onClick={() => {
+                        setUpdateError(null)
+                        setEditingCredentials(item)
+                      }}
+                      className="mt-1 text-xs text-purple-400 underline-offset-2 hover:underline"
+                    >
+                      Editar credenciales de Epic
+                    </button>
                   )}
                 </div>
-                {SPECIAL_TYPES.includes(item.type) && (
-                  <button
-                    onClick={() => {
-                      setUpdateError(null)
-                      setEditingCredentials(item)
-                    }}
-                    className="mt-1 text-xs text-purple-400 underline-offset-2 hover:underline"
-                  >
-                    Editar credenciales de Epic
-                  </button>
-                )}
               </div>
-            </div>
 
             <div className="flex items-center gap-3">
               <div className="flex items-center rounded-md border border-gray-700">
@@ -187,7 +223,7 @@ export function CartView() {
               <button
                 onClick={() => removeItem(item.id)}
                 className="rounded-md p-1.5 text-gray-500 transition hover:bg-red-900/20 hover:text-red-400"
-                aria-label={`Remover ${item.product.name}`}
+                aria-label={`Remover ${item.type === 'BUNDLE' ? (item.bundleName ?? 'Bundle') : (item.product?.name ?? '')}`}
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
@@ -213,6 +249,29 @@ export function CartView() {
           <span className="text-lg font-bold text-white">${totalMxn.toFixed(2)} MXN</span>
         </div>
 
+        <div className="mt-4 border-t border-gray-800 pt-4">
+          <p className="mb-2 text-sm font-medium text-gray-300">Método de pago</p>
+          <div className="grid grid-cols-2 gap-2">
+            {PAYMENT_METHODS.map((method) => (
+              <button
+                key={method.id}
+                onClick={() => setPaymentMethod(method.id)}
+                className={`flex items-center gap-2 rounded-lg border p-3 text-left transition ${
+                  paymentMethod === method.id
+                    ? 'border-purple-500 bg-purple-500/10'
+                    : 'border-gray-700 bg-gray-800 hover:border-gray-600'
+                }`}
+              >
+                <span className="text-xl">{method.icon}</span>
+                <div>
+                  <p className="text-sm font-medium text-white">{method.label}</p>
+                  <p className="text-xs text-gray-400">{method.description}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {requestError && (
           <div className="mt-4 rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">
             {requestError}
@@ -230,7 +289,7 @@ export function CartView() {
 
       <CredentialsModal
         open={!!editingCredentials}
-        productName={editingCredentials?.product.name ?? ''}
+        productName={editingCredentials?.product?.name ?? ''}
         loading={saving}
         error={updateError}
         onSubmit={handleCredentialsSubmit}

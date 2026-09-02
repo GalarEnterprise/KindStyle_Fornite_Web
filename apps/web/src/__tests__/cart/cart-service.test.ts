@@ -14,12 +14,15 @@ vi.mock('@/lib/db/client', () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
+    shopSnapshot: { findFirst: vi.fn() },
+    shopItem: { findMany: vi.fn() },
   },
 }))
 
 import { db } from '@/lib/db/client'
 import {
   addItem,
+  addBundleItem,
   updateItem,
   removeItem,
   getCart,
@@ -172,5 +175,106 @@ describe('Cart Service — updateItem / removeItem', () => {
     const result = await removeItem(USER_ID, 'item-de-otro')
 
     expect(result.success).toBe(false)
+  })
+})
+
+describe('Cart Service — addBundleItem', () => {
+  const BUNDLE_OFFER_ID = 'v2:/bundle-offer-1'
+  const SNAPSHOT = { id: 'snapshot-1' } as never
+
+  function mockBundleItem(productOverrides: Partial<typeof GIFT_PRODUCT> = {}) {
+    mockDb.shopSnapshot.findFirst.mockResolvedValue(SNAPSHOT)
+    mockDb.shopItem.findMany.mockResolvedValue([
+      {
+        price_vbucks: 2500,
+        product_id: GIFT_PRODUCT.id,
+        bundle_info: { name: 'Pack Completo', image: 'https://img.example.com/bundle.png' },
+        product: { ...GIFT_PRODUCT, ...productOverrides },
+      } as never,
+    ])
+  }
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('crea un CartItem tipo BUNDLE con precio fijo de la API', async () => {
+    mockBundleItem()
+    mockDb.cartItem.findFirst.mockResolvedValue(null)
+    mockDb.cartItem.create.mockResolvedValue({ id: 'cart-bundle', quantity: 1 } as never)
+
+    const result = await addBundleItem(USER_ID, { offerId: BUNDLE_OFFER_ID, quantity: 1 })
+
+    expect(result.success).toBe(true)
+    const callData = mockDb.cartItem.create.mock.calls[0][0].data
+    expect(callData).toMatchObject({
+      user_id: USER_ID,
+      product_id: null,
+      quantity: 1,
+      type: 'BUNDLE',
+      bundle_offer_id: BUNDLE_OFFER_ID,
+      bundle_name: 'Pack Completo',
+      bundle_price_vbucks: 2500,
+    })
+    expect(callData.bundle_components).toHaveLength(1)
+    expect(JSON.stringify(callData)).not.toContain('encrypted_credentials')
+  })
+
+  it('rechaza bundle inexistente', async () => {
+    mockDb.shopSnapshot.findFirst.mockResolvedValue(SNAPSHOT)
+    mockDb.shopItem.findMany.mockResolvedValue([])
+
+    const result = await addBundleItem(USER_ID, { offerId: BUNDLE_OFFER_ID, quantity: 1 })
+
+    expect(result.success).toBe(false)
+    if (!result.success) expect(result.error.code).toBe('BUNDLE_NOT_FOUND')
+  })
+
+  it('duplicado incrementa cantidad en vez de fallar', async () => {
+    mockBundleItem()
+    mockDb.cartItem.findFirst.mockResolvedValue({
+      id: 'cart-bundle-existing',
+      quantity: 2,
+    } as never)
+    mockDb.cartItem.update.mockResolvedValue({ id: 'cart-bundle-existing', quantity: 3 } as never)
+
+    const result = await addBundleItem(USER_ID, { offerId: BUNDLE_OFFER_ID, quantity: 1 })
+
+    expect(result.success).toBe(true)
+    expect(mockDb.cartItem.update).toHaveBeenCalledWith({
+      where: { id: 'cart-bundle-existing' },
+      data: { quantity: 3 },
+    })
+  })
+
+  it('bundle con giftable UNKNOWN no se bloquea y marca requiresManualReview', async () => {
+    mockBundleItem({ giftable: 'UNKNOWN' })
+    mockDb.cartItem.findFirst.mockResolvedValue(null)
+    mockDb.cartItem.create.mockResolvedValue({ id: 'cart-bundle', quantity: 1 } as never)
+
+    const result = await addBundleItem(USER_ID, { offerId: BUNDLE_OFFER_ID, quantity: 1 })
+
+    expect(result.success).toBe(true)
+    if (result.success) expect(result.data.requiresManualReview).toBe(true)
+  })
+
+  it('bundle NOT_GIFTABLE se rechaza', async () => {
+    mockBundleItem({ giftable: 'NOT_GIFTABLE' })
+
+    const result = await addBundleItem(USER_ID, { offerId: BUNDLE_OFFER_ID, quantity: 1 })
+
+    expect(result.success).toBe(false)
+    if (!result.success) expect(result.error.code).toBe('NOT_GIFTABLE')
+  })
+
+  it('cantidad fuera de rango se limita a máx 10', async () => {
+    mockBundleItem()
+    mockDb.cartItem.findFirst.mockResolvedValue(null)
+    mockDb.cartItem.create.mockResolvedValue({ id: 'cart-bundle', quantity: 10 } as never)
+
+    const result = await addBundleItem(USER_ID, { offerId: BUNDLE_OFFER_ID, quantity: 99 })
+
+    expect(result.success).toBe(true)
+    expect(mockDb.cartItem.create.mock.calls[0][0].data.quantity).toBe(10)
   })
 })

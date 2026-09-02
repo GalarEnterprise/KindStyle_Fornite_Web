@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
 
 export function LoginForm() {
@@ -12,6 +12,8 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const add = searchParams.get('add')
   const { refresh } = useAuth()
 
   async function handleSubmit(e: React.FormEvent) {
@@ -37,9 +39,15 @@ export function LoginForm() {
       await refresh()
 
       if (data.user?.isFirstLogin) {
-        router.push('/nickname')
+        const params = new URLSearchParams()
+        if (add) params.set('add', add)
+        const q = params.toString() ? `?${params.toString()}` : ''
+        router.push(`/nickname${q}`)
       } else {
-        router.push('/account')
+        const params = new URLSearchParams()
+        params.set('validated', '1')
+        if (add) params.set('add', add)
+        router.push(`/shop?${params.toString()}`)
       }
     } catch {
       setError('Error de conexión')

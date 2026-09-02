@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const result = await createRequestFromCart(user.userId)
+    const result = await createRequestFromCart(user.userId, parsed.data.paymentMethod)
 
     if (!result.success) {
       const status =

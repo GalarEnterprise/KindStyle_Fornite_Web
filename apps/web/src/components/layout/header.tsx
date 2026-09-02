@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useFriendship } from '@/hooks/use-friendship'
 import { CartBadge } from '@/components/cart/cart-badge'
 import { NotificationBell } from '@/components/notifications/notification-bell'
+import { UserMenu } from '@/components/layout/user-menu'
 
 export function BotsCta() {
   const { isAuthenticated, isAdmin } = useAuth()
@@ -46,7 +47,7 @@ export function BotsCta() {
 }
 
 export function Header() {
-  const { user, isAuthenticated, isAdmin, logout } = useAuth()
+  const { isAuthenticated } = useAuth()
 
   return (
     <header className="sticky top-0 z-40 border-b border-gray-800 bg-gray-950/95 backdrop-blur">
@@ -70,28 +71,7 @@ export function Header() {
           <BotsCta />
 
           {isAuthenticated ? (
-            <>
-              <Link
-                href="/account/profile"
-                className="rounded-md px-3 py-1.5 text-sm font-medium text-gray-300 transition hover:bg-gray-800 hover:text-white"
-              >
-                {user?.nickname ?? 'Mi cuenta'}
-              </Link>
-              {isAdmin && (
-                <Link
-                  href="/admin/dashboard"
-                  className="rounded-md px-3 py-1.5 text-sm font-medium text-purple-400 transition hover:bg-purple-900/30 hover:text-purple-300"
-                >
-                  Admin
-                </Link>
-              )}
-              <button
-                onClick={() => logout()}
-                className="rounded-md px-3 py-1.5 text-sm font-medium text-gray-400 transition hover:bg-gray-800 hover:text-white"
-              >
-                Salir
-              </button>
-            </>
+            <UserMenu />
           ) : (
             <Link
               href="/login"

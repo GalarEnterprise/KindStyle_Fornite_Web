@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
 import { buildRequestMessage, buildWhatsappUrl } from '@/lib/services/requests/message-service'
+import { PaymentInfo } from '@/components/checkout/payment-info'
+import { copyToClipboard } from '@/lib/utils/copy'
 
 interface RequestDetail {
   id: string
@@ -12,6 +14,7 @@ interface RequestDetail {
   status: string
   totalVbucks: number
   totalMxn: number
+  paymentMethod: 'TRANSFER' | 'OXXO'
   whatsappOpenedAt: string | null
   createdAt: string
   items: Array<{
@@ -41,6 +44,7 @@ export function RequestConfirmation() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [copyError, setCopyError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!requestId) {
@@ -98,11 +102,13 @@ export function RequestConfirmation() {
   }
 
   async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(getMessage())
+    const ok = await copyToClipboard(getMessage())
+    if (ok) {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch {}
+    } else {
+      setCopyError('No se pudo copiar. Intenta de nuevo.')
+    }
   }
 
   if (isLoading) {
@@ -138,7 +144,7 @@ export function RequestConfirmation() {
       <div className="rounded-lg border border-green-500/30 bg-green-500/10 p-4">
         <h1 className="text-lg font-bold text-green-400">✓ Solicitud creada</h1>
         <p className="mt-1 text-sm text-gray-300">
-          Envía tu solicitud al vendedor por WhatsApp para continuar con la compra.
+          Realiza el pago con los datos de abajo y envía tu comprobante por WhatsApp.
         </p>
       </div>
 
@@ -160,10 +166,26 @@ export function RequestConfirmation() {
         </div>
 
         <div className="mt-4 flex justify-between border-t border-gray-800 pt-4">
-          <span className="text-sm text-gray-400">Total estimado</span>
+          <span className="text-sm text-gray-400">Total a pagar</span>
           <div className="text-right">
             <div className="font-bold text-yellow-400">{detail.totalVbucks.toLocaleString('es-MX')} V-Bucks</div>
-            <div className="text-sm text-gray-400">≈ ${detail.totalMxn.toFixed(2)} MXN</div>
+            <div className="text-lg font-bold text-white">${detail.totalMxn.toFixed(2)} MXN</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <PaymentInfo method={detail.paymentMethod} amountMxn={detail.totalMxn} />
+      </div>
+
+      <div className="mt-6 rounded-lg border border-blue-500/30 bg-blue-500/10 p-4">
+        <div className="flex items-start gap-3">
+          <span className="text-xl">📸</span>
+          <div>
+            <h3 className="font-medium text-blue-400">Envía tu comprobante</h3>
+            <p className="mt-1 text-sm text-gray-300">
+              Después de realizar el pago, toma una captura de pantalla del comprobante y envíala por WhatsApp para confirmar tu pago.
+            </p>
           </div>
         </div>
       </div>
@@ -173,7 +195,7 @@ export function RequestConfirmation() {
           onClick={handleOpenWhatsapp}
           className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-green-700"
         >
-          Abrir WhatsApp
+          Enviar comprobante por WhatsApp
         </button>
 
         <button
@@ -187,6 +209,10 @@ export function RequestConfirmation() {
           {copied ? '✓ Copiado' : 'Copiar solicitud'}
         </button>
       </div>
+
+      {copyError && (
+        <p className="mt-2 text-center text-sm text-red-400">{copyError}</p>
+      )}
 
       <Link
         href="/account/requests"

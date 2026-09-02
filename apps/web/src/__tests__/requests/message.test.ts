@@ -43,19 +43,19 @@ describe('buildRequestMessage', () => {
 
 describe('buildWhatsappUrl', () => {
   it('construye URL wa.me con mensaje URL-encoded', () => {
-    const url = buildWhatsappUrl('hola mundo', '+523191033181')
+    const url = buildWhatsappUrl('hola mundo', '+523531022207')
 
-    expect(url).toBe('https://wa.me/523191033181?text=hola%20mundo')
+    expect(url).toBe('https://wa.me/523531022207?text=hola%20mundo')
   })
 
   it('elimina caracteres no numéricos del teléfono', () => {
-    const url = buildWhatsappUrl('test', '+52 (319) 103-3181')
+    const url = buildWhatsappUrl('test', '+52 (353) 102-2207')
 
-    expect(url).toContain('https://wa.me/523191033181?text=')
+    expect(url).toContain('https://wa.me/523531022207?text=')
   })
 
   it('codifica saltos de línea correctamente', () => {
-    const url = buildWhatsappUrl('línea1\nlínea2', '+523191033181')
+    const url = buildWhatsappUrl('línea1\nlínea2', '+523531022207')
 
     expect(url).toContain('l%C3%ADnea1%0Al%C3%ADnea2')
   })

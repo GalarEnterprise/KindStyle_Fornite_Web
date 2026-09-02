@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import { copyToClipboard } from '@/lib/utils/copy'
 
 interface DetailBot {
   id: string
@@ -60,9 +61,11 @@ export function AdminFriendshipDetail() {
 
   async function handleCopyId() {
     if (!detail) return
-    await navigator.clipboard.writeText(detail.platform_user_id)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    const ok = await copyToClipboard(detail.platform_user_id)
+    if (ok) {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
   }
 
   async function handleAction(botId: string, action: 'mark-request-sent' | 'confirm-friendship') {
