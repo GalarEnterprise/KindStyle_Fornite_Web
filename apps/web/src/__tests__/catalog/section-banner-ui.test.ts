@@ -102,9 +102,8 @@ describe('SectionSidebar', () => {
     expect(html).toContain('Kai Cenat')
     expect(html).toContain('Otros')
 
-    const otrosIdx = html.indexOf('href="#section-otros"')
-    const otrosLinkEnd = html.indexOf('</a>', otrosIdx)
-    expect(html.slice(otrosIdx, otrosLinkEnd)).not.toContain('<img')
+    expect(html).not.toContain('href="#section-otros"')
+    expect(html).toContain('Otros')
   })
 
   it('renders horizontal mobile nav without thumbnails', () => {

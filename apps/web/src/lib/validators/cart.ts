@@ -12,7 +12,7 @@ export const AddToCartSchema = z
   .object({
     productId: z.string().uuid('productId debe ser un UUID válido').optional(),
     offerId: z.string().min(1, 'offerId es requerido').optional(),
-    quantity: z.number().int().min(1, 'La cantidad mínima es 1').max(10, 'La cantidad máxima es 10').default(1),
+    quantity: z.number().int().min(1, 'La cantidad mínima es 1').max(1, 'La cantidad máxima es 1').default(1),
     credentials: CredentialsSchema.optional(),
   })
   .refine((data) => Boolean(data.productId) !== Boolean(data.offerId), {
@@ -21,7 +21,7 @@ export const AddToCartSchema = z
   })
 
 export const UpdateCartItemSchema = z.object({
-  quantity: z.number().int().min(1, 'La cantidad mínima es 1').max(10, 'La cantidad máxima es 10').optional(),
+  quantity: z.number().int().min(1, 'La cantidad mínima es 1').max(1, 'La cantidad máxima es 1').optional(),
   credentials: CredentialsSchema.optional(),
 }).refine((data) => data.quantity !== undefined || data.credentials !== undefined, {
   message: 'Debe proporcionar quantity o credentials',

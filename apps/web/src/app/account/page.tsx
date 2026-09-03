@@ -1,59 +1,106 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
+'use client'
 
-export const metadata: Metadata = {
-  title: 'Mi cuenta — KindStyle',
+import { useState, useEffect } from 'react'
+import type { Metadata } from 'next'
+
+interface UserData {
+  id: string
+  email: string
+  nickname: string | null
+  role: string
+  created_at: string
+}
+
+function getRoleLabel(role: string) {
+  switch (role) {
+    case 'SUPER_ADMIN':
+      return 'Super Admin'
+    case 'ADMIN':
+      return 'Admin'
+    default:
+      return 'Usuario'
+  }
 }
 
 export default function AccountPage() {
-  return (
-    <div className="min-h-screen bg-gray-950">
-      <div className="mx-auto max-w-3xl px-4 py-8">
+  const [userData, setUserData] = useState<UserData | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchUserData() {
+      try {
+        const res = await fetch('/api/auth/me')
+        const data = await res.json()
+        if (data.success) {
+          setUserData(data.data)
+        }
+      } catch {
+        console.error('Error fetching user data')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchUserData()
+  }, [])
+
+  if (isLoading) {
+    return (
+      <div className="animate-pulse space-y-4">
+        <div className="h-8 w-48 rounded bg-gray-800" />
+        <div className="h-4 w-64 rounded bg-gray-800" />
+        <div className="mt-6 h-32 rounded-lg bg-gray-800" />
+      </div>
+    )
+  }
+
+  if (!userData) {
+    return (
+      <div>
         <h1 className="text-2xl font-bold text-white">Mi cuenta</h1>
-        <p className="mt-1 text-sm text-gray-400">
-          Gestiona tus solicitudes, pagos y configuración.
-        </p>
+        <p className="mt-2 text-gray-400">Error al cargar los datos del usuario.</p>
+      </div>
+    )
+  }
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
-          <Link
-            href="/account/requests"
-            className="rounded-lg border border-gray-800 bg-gray-900 p-6 transition hover:border-purple-500/50"
-          >
-            <h2 className="text-lg font-semibold text-white">Mis solicitudes</h2>
-            <p className="mt-1 text-sm text-gray-400">
-              Historial de tus compras y su estado.
-            </p>
-          </Link>
+  return (
+    <div>
+      <h1 className="text-2xl font-bold text-white">Mi cuenta</h1>
+      <p className="mt-1 text-sm text-gray-400">
+        Gestiona tu información y configuración.
+      </p>
 
-          <Link
-            href="/account/bots"
-            className="rounded-lg border border-gray-800 bg-gray-900 p-6 transition hover:border-purple-500/50"
-          >
-            <h2 className="text-lg font-semibold text-white">Mis bots</h2>
-            <p className="mt-1 text-sm text-gray-400">
-              Bots configurados para amistad y envío.
-            </p>
-          </Link>
+      <div className="mt-6 rounded-lg border border-gray-800 bg-gray-900 p-6">
+        <h2 className="text-lg font-semibold text-white">Información Personal</h2>
 
-          <Link
-            href="/account/payment"
-            className="rounded-lg border border-gray-800 bg-gray-900 p-6 transition hover:border-purple-500/50"
-          >
-            <h2 className="text-lg font-semibold text-white">Pagos</h2>
-            <p className="mt-1 text-sm text-gray-400">
-              Estados de pago y comprobantes.
-            </p>
-          </Link>
+        <div className="mt-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-400">Apodo</label>
+            <p className="mt-1 text-white">{userData.nickname || 'Sin apodo'}</p>
+          </div>
 
-          <Link
-            href="/account/notifications"
-            className="rounded-lg border border-gray-800 bg-gray-900 p-6 transition hover:border-purple-500/50"
-          >
-            <h2 className="text-lg font-semibold text-white">Notificaciones</h2>
-            <p className="mt-1 text-sm text-gray-400">
-              Alertas y avisos importantes.
+          <div>
+            <label className="block text-sm font-medium text-gray-400">Email</label>
+            <p className="mt-1 text-white">{userData.email}</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-400">Rol</label>
+            <p className="mt-1 text-white">{getRoleLabel(userData.role)}</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-400">
+              Miembro desde
+            </label>
+            <p className="mt-1 text-white">
+              {new Date(userData.created_at).toLocaleDateString('es-MX', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+              })}
             </p>
-          </Link>
+          </div>
         </div>
       </div>
     </div>

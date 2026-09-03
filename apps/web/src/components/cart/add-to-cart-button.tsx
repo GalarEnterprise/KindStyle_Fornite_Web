@@ -16,13 +16,15 @@ interface AddToCartButtonProps {
 
 export function AddToCartButton({ productId, productName, productType }: AddToCartButtonProps) {
   const { isAuthenticated, isLoading } = useAuth()
-  const { addItem } = useCart()
+  const { addItem, items } = useCart()
   const router = useRouter()
 
   const [showCredentials, setShowCredentials] = useState(false)
   const [loading, setLoading] = useState(false)
   const [modalError, setModalError] = useState<string | null>(null)
   const [added, setAdded] = useState(false)
+
+  const isInCart = items.some((item) => item.type !== 'BUNDLE' && item.productId === productId)
 
   async function doAdd(credentials?: CredentialsPayload) {
     setLoading(true)
@@ -45,7 +47,7 @@ export function AddToCartButton({ productId, productName, productType }: AddToCa
   }
 
   function handleClick() {
-    if (isLoading) return
+    if (isLoading || isInCart) return
     if (!isAuthenticated) {
       if (SPECIAL_TYPES.includes(productType)) {
         router.push('/login')
@@ -65,13 +67,15 @@ export function AddToCartButton({ productId, productName, productType }: AddToCa
     <>
       <button
         onClick={handleClick}
-        disabled={loading}
+        disabled={loading || isInCart}
         className={`mx-3 mb-3 rounded-md px-3 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-          added ? 'bg-green-600' : 'bg-purple-600 hover:bg-purple-700'
+          added || isInCart ? 'bg-green-600' : 'bg-purple-600 hover:bg-purple-700'
         }`}
       >
         {added ? (
           <>✓ Agregado</>
+        ) : isInCart ? (
+          <>✓ En carrito</>
         ) : loading ? (
           <>Agregando...</>
         ) : (

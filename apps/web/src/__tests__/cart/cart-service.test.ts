@@ -62,17 +62,17 @@ describe('Cart Service — addItem', () => {
   it('agrega un producto normal sin credenciales', async () => {
     mockFindUnique(GIFT_PRODUCT)
     mockDb.cartItem.findUnique.mockResolvedValue(null)
-    mockDb.cartItem.create.mockResolvedValue({ id: 'cart-1', quantity: 2 } as never)
+    mockDb.cartItem.create.mockResolvedValue({ id: 'cart-1', quantity: 1 } as never)
 
     const result = await addItem(USER_ID, {
       productId: GIFT_PRODUCT.id,
-      quantity: 2,
+      quantity: 1,
     })
 
     expect(result.success).toBe(true)
     expect(mockDb.cartItem.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ user_id: USER_ID, quantity: 2, type: 'GIFT' }),
+        data: expect.objectContaining({ user_id: USER_ID, quantity: 1, type: 'GIFT' }),
       })
     )
     expect(mockDb.cartItem.create.mock.calls[0][0].data).not.toHaveProperty('encrypted_credentials')
@@ -125,23 +125,21 @@ describe('Cart Service — addItem', () => {
     expect(JSON.stringify(callData)).not.toContain('secreto123')
   })
 
-  it('duplicado incrementa cantidad en vez de fallar', async () => {
+  it('duplicado devuelve ITEM_ALREADY_IN_CART en vez de incrementar', async () => {
     mockFindUnique(GIFT_PRODUCT)
     mockDb.cartItem.findUnique.mockResolvedValue({
       id: 'cart-existing',
-      quantity: 4,
+      quantity: 1,
       user_id: USER_ID,
       product_id: GIFT_PRODUCT.id,
     } as never)
-    mockDb.cartItem.update.mockResolvedValue({ id: 'cart-existing', quantity: 6 } as never)
 
-    const result = await addItem(USER_ID, { productId: GIFT_PRODUCT.id, quantity: 2 })
+    const result = await addItem(USER_ID, { productId: GIFT_PRODUCT.id, quantity: 1 })
 
-    expect(result.success).toBe(true)
-    expect(mockDb.cartItem.update).toHaveBeenCalledWith({
-      where: { id: 'cart-existing' },
-      data: { quantity: 6 },
-    })
+    expect(result.success).toBe(false)
+    if (!result.success) expect(result.error.code).toBe('ITEM_ALREADY_IN_CART')
+    expect(mockDb.cartItem.update).not.toHaveBeenCalled()
+    expect(mockDb.cartItem.create).not.toHaveBeenCalled()
   })
 })
 
@@ -230,21 +228,19 @@ describe('Cart Service — addBundleItem', () => {
     if (!result.success) expect(result.error.code).toBe('BUNDLE_NOT_FOUND')
   })
 
-  it('duplicado incrementa cantidad en vez de fallar', async () => {
+  it('duplicado devuelve ITEM_ALREADY_IN_CART en vez de incrementar', async () => {
     mockBundleItem()
     mockDb.cartItem.findFirst.mockResolvedValue({
       id: 'cart-bundle-existing',
-      quantity: 2,
+      quantity: 1,
     } as never)
-    mockDb.cartItem.update.mockResolvedValue({ id: 'cart-bundle-existing', quantity: 3 } as never)
 
     const result = await addBundleItem(USER_ID, { offerId: BUNDLE_OFFER_ID, quantity: 1 })
 
-    expect(result.success).toBe(true)
-    expect(mockDb.cartItem.update).toHaveBeenCalledWith({
-      where: { id: 'cart-bundle-existing' },
-      data: { quantity: 3 },
-    })
+    expect(result.success).toBe(false)
+    if (!result.success) expect(result.error.code).toBe('ITEM_ALREADY_IN_CART')
+    expect(mockDb.cartItem.update).not.toHaveBeenCalled()
+    expect(mockDb.cartItem.create).not.toHaveBeenCalled()
   })
 
   it('bundle con giftable UNKNOWN no se bloquea y marca requiresManualReview', async () => {
@@ -267,14 +263,14 @@ describe('Cart Service — addBundleItem', () => {
     if (!result.success) expect(result.error.code).toBe('NOT_GIFTABLE')
   })
 
-  it('cantidad fuera de rango se limita a máx 10', async () => {
+  it('cantidad se fuerza a 1', async () => {
     mockBundleItem()
     mockDb.cartItem.findFirst.mockResolvedValue(null)
-    mockDb.cartItem.create.mockResolvedValue({ id: 'cart-bundle', quantity: 10 } as never)
+    mockDb.cartItem.create.mockResolvedValue({ id: 'cart-bundle', quantity: 1 } as never)
 
     const result = await addBundleItem(USER_ID, { offerId: BUNDLE_OFFER_ID, quantity: 99 })
 
     expect(result.success).toBe(true)
-    expect(mockDb.cartItem.create.mock.calls[0][0].data.quantity).toBe(10)
+    expect(mockDb.cartItem.create.mock.calls[0][0].data.quantity).toBe(1)
   })
 })

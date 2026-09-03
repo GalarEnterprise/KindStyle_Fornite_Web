@@ -263,3 +263,51 @@ El sistema DEBE, cuando un usuario sin sesión intenta agregar un producto o bun
 #### Scenario: Auto-agregado de producto que requiere credenciales
 - **WHEN** el item pendiente es de tipo V-Bucks/CREW/BATTLE_PASS
 - **THEN** el sistema NO lo agrega automáticamente y deja al usuario en la tienda para continuar el flujo de credenciales
+
+### REQ-CART-016: Una unidad por artículo
+
+El sistema DEBE limitar el carrito a UNA unidad por artículo, ya sea un producto individual o un bundle (paquete completo).
+
+- El sistema NO DEBE permitir que un mismo artículo (identificado por `productId` o `bundleOfferId`) aparezca más de una vez en el carrito de un usuario.
+- Al intentar agregar un artículo que ya está en el carrito, el sistema DEBE devolver un error `ITEM_ALREADY_IN_CART` y NO DEBE incrementar la cantidad.
+- El sistema DEBE rechazar (422) cualquier solicitud de alta `POST /api/cart` con `quantity` mayor a 1.
+- La cantidad de cada artículo DEBE fijarse siempre en 1.
+
+#### Scenario: Agregar producto ya presente
+- **WHEN** un usuario autenticado tiene el producto X en su carrito y envía `POST /api/cart` con `{ productId: X }`
+- **THEN** el sistema responde 409 con `ITEM_ALREADY_IN_CART` y NO modifica el carrito
+
+#### Scenario: Agregar bundle ya presente
+- **WHEN** un usuario autenticado tiene el bundle con `offerId: Y` en su carrito y envía `POST /api/cart` con `{ offerId: Y }`
+- **THEN** el sistema responde 409 con `ITEM_ALREADY_IN_CART` y NO modifica el carrito
+
+#### Scenario: Cantidad mayor a 1 rechazada
+- **WHEN** un usuario envía `POST /api/cart` con `{ productId: X, quantity: 2 }`
+- **THEN** el sistema responde 422 con `VALIDATION_ERROR`
+
+### REQ-CART-017: Quitar artículo del carrito
+
+El sistema DEBE seguir permitiendo que el usuario elimine un artículo de su carrito en cualquier momento.
+
+- El artículo eliminado DEBE poder agregarse de nuevo después de ser quitado, cumpliendo la regla de una unidad.
+- El endpoint `DELETE /api/cart/[itemId]` DEBE continuar funcionando sin cambios de regla.
+
+#### Scenario: Quitar un artículo
+- **WHEN** un usuario quita (DELETE) un artículo que ya estaba en su carrito
+- **THEN** el sistema remueve el artículo y, tras ello, puede volver a agregarse una única unidad
+
+### REQ-CART-018: UI de una unidad
+
+La interfaz DEBE reflejar la regla de una unidad tanto en el carrito como en la tienda.
+
+- En `/cart` DEBE mostrarse la cantidad fija "1" por artículo, SIN controles de incrementar/decrementar.
+- En `/shop`, el botón "Agregar" de un artículo o bundle que ya está en el carrito DEBE mostrarse deshabilitado con el texto "En carrito" y NO DEBE ejecutar la acción al hacer clic.
+- El contador/badge del carrito DEBE equivaler al número de artículos distintos (no a la suma de cantidades).
+
+#### Scenario: Botón deshabilitado en la tienda
+- **WHEN** un artículo ya está en el carrito y el usuario ve su tarjeta en `/shop`
+- **THEN** el botón "Agregar" aparece deshabilitado con el texto "En carrito"
+
+#### Scenario: Carrito sin stepper de cantidad
+- **WHEN** un artículo está en `/cart`
+- **THEN** se muestra "1" sin controles +/− y con el botón de quitar disponible

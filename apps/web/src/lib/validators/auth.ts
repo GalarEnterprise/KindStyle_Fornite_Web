@@ -68,9 +68,52 @@ export const EmailSchema = z.object({
   email: z.string().email('Email inválido'),
 })
 
+export const ForgotPasswordSchema = z.object({
+  email: z.string().email('Email inválido'),
+})
+
+export const ResetPasswordSchema = z.object({
+  email: z.string().email('Email inválido'),
+  code: z.string().length(6, 'El código debe tener 6 dígitos').regex(/^\d{6}$/, 'El código solo puede contener números'),
+  password: z.string().min(8, 'La contraseña debe tener al menos 8 caracteres'),
+  confirmPassword: z.string(),
+}).superRefine((data, ctx) => {
+  if (data.password !== data.confirmPassword) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['confirmPassword'],
+      message: 'Las contraseñas no coinciden',
+    })
+  }
+})
+
+export const ChangePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'La contraseña actual es requerida'),
+  newPassword: z.string().min(8, 'La nueva contraseña debe tener al menos 8 caracteres'),
+  confirmPassword: z.string(),
+}).superRefine((data, ctx) => {
+  if (data.currentPassword === data.newPassword) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['newPassword'],
+      message: 'La nueva contraseña debe ser diferente a la actual',
+    })
+  }
+  if (data.newPassword !== data.confirmPassword) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['confirmPassword'],
+      message: 'Las contraseñas no coinciden',
+    })
+  }
+})
+
 export type RegisterInput = z.infer<typeof RegisterSchema>
 export type VerifyCodeInput = z.infer<typeof VerifyCodeSchema>
 export type LoginInput = z.infer<typeof LoginSchema>
 export type CreatePasswordInput = z.infer<typeof CreatePasswordSchema>
 export type NicknameInput = z.infer<typeof NicknameSchema>
 export type EmailInput = z.infer<typeof EmailSchema>
+export type ForgotPasswordInput = z.infer<typeof ForgotPasswordSchema>
+export type ResetPasswordInput = z.infer<typeof ResetPasswordSchema>
+export type ChangePasswordInput = z.infer<typeof ChangePasswordSchema>

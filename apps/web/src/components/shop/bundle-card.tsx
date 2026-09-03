@@ -19,15 +19,17 @@ export function BundleCard({ offerId, name, imageUrl, priceVbucks, components }:
   const [added, setAdded] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { isAuthenticated, isLoading } = useAuth()
-  const { addBundleItem } = useCart()
+  const { addBundleItem, items } = useCart()
   const router = useRouter()
 
   const vbucksRate = 7.5
   const priceMxn = priceVbucks * (vbucksRate / 100)
 
+  const isInCart = Boolean(offerId) && items.some((item) => item.bundleOfferId === offerId!)
+
   async function handleAdd() {
     setError(null)
-    if (isLoading) return
+    if (isLoading || isInCart) return
     if (!isAuthenticated) {
       router.push(offerId ? `/login?add=${encodeURIComponent(`bundle:${offerId}`)}` : '/login')
       return
@@ -122,15 +124,15 @@ export function BundleCard({ offerId, name, imageUrl, priceVbucks, components }:
 
       <button
         onClick={handleAdd}
-        disabled={loading || !offerId}
+        disabled={loading || isInCart || !offerId}
         className={`mx-3 mb-3 rounded-md px-3 py-2 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-          added ? 'bg-green-600' : 'bg-purple-600 hover:bg-purple-700'
+          added || isInCart ? 'bg-green-600' : 'bg-purple-600 hover:bg-purple-700'
         }`}
       >
         <svg className="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
-        {added ? '✓ Agregado' : loading ? 'Agregando...' : 'Agregar'}
+        {isInCart ? '✓ En carrito' : added ? '✓ Agregado' : loading ? 'Agregando...' : 'Agregar'}
       </button>
     </div>
   )

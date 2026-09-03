@@ -2,11 +2,11 @@ import { describe, it, expect } from 'vitest'
 import { AddToCartSchema, UpdateCartItemSchema, CredentialsSchema } from '@/lib/validators/cart'
 
 describe('Cart Validators', () => {
-  describe('AddToCartSchema', () => {
+   describe('AddToCartSchema', () => {
     it('acepta producto normal válido', () => {
       const result = AddToCartSchema.safeParse({
         productId: '123e4567-e89b-12d3-a456-426614174000',
-        quantity: 2,
+        quantity: 1,
       })
       expect(result.success).toBe(true)
     })
@@ -32,10 +32,10 @@ describe('Cart Validators', () => {
       expect(result.success).toBe(false)
     })
 
-    it('rechaza quantity mayor a 10', () => {
+    it('rechaza quantity mayor a 1', () => {
       const result = AddToCartSchema.safeParse({
         productId: '123e4567-e89b-12d3-a456-426614174000',
-        quantity: 11,
+        quantity: 2,
       })
       expect(result.success).toBe(false)
     })
@@ -51,7 +51,7 @@ describe('Cart Validators', () => {
 
   describe('UpdateCartItemSchema', () => {
     it('acepta solo quantity', () => {
-      const result = UpdateCartItemSchema.safeParse({ quantity: 3 })
+      const result = UpdateCartItemSchema.safeParse({ quantity: 1 })
       expect(result.success).toBe(true)
     })
 
@@ -69,7 +69,7 @@ describe('Cart Validators', () => {
 
     it('rechaza quantity fuera de rango', () => {
       expect(UpdateCartItemSchema.safeParse({ quantity: 0 }).success).toBe(false)
-      expect(UpdateCartItemSchema.safeParse({ quantity: 99 }).success).toBe(false)
+      expect(UpdateCartItemSchema.safeParse({ quantity: 2 }).success).toBe(false)
     })
   })
 

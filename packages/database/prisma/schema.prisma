@@ -68,20 +68,27 @@ model Session {
   @@index([token])
 }
 
+enum VerificationCodeType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
 model VerificationCode {
-  id         String   @id @default(uuid())
+  id         String               @id @default(uuid())
   user_id    String?
   email      String
   code       String
-  attempts   Int      @default(0)
+  type       VerificationCodeType @default(EMAIL_VERIFICATION)
+  attempts   Int                  @default(0)
   expires_at DateTime
-  verified   Boolean  @default(false)
-  created_at DateTime @default(now())
+  verified   Boolean              @default(false)
+  created_at DateTime             @default(now())
 
   user User? @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([email])
   @@index([code])
+  @@index([email, type])
 }
 
 // ==========================================

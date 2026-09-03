@@ -56,11 +56,13 @@ export async function POST(request: NextRequest) {
       const status =
         result.error.code === 'PRODUCT_NOT_FOUND' || result.error.code === 'BUNDLE_NOT_FOUND'
           ? 404
-          : result.error.code === 'CREDENTIALS_REQUIRED' ||
-              result.error.code === 'NOT_GIFTABLE' ||
-              result.error.code === 'VALIDATION_ERROR'
-            ? 422
-            : 400
+          : result.error.code === 'ITEM_ALREADY_IN_CART'
+            ? 409
+            : result.error.code === 'CREDENTIALS_REQUIRED' ||
+                result.error.code === 'NOT_GIFTABLE' ||
+                result.error.code === 'VALIDATION_ERROR'
+              ? 422
+              : 400
       return NextResponse.json(result, { status })
     }
 

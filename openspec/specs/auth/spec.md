@@ -215,3 +215,60 @@ El sistema DEBE hacer que el botón "Mi cuenta" del header navegue a una ruta ex
 #### Scenario: Botón visible solo con sesión
 - **WHEN** el usuario no tiene sesión activa
 - **THEN** el botón "Mi cuenta" NO se muestra (se muestra la opción de iniciar sesión)
+
+### REQ-AUTH-016: Recuperar contraseña
+
+El sistema DEBE permitir al usuario recuperar su contraseña olvidada mediante código de verificación por email.
+
+- El sistema DEBE proporcionar un enlace "¿Olvidaste tu contraseña?" en la página de login
+- Al hacer clic, DEBE redirigir a `/forgot-password`
+- El usuario DEBE ingresar su email para recibir un código de verificación
+- El sistema DEBE enviar un código de 6 dígitos al email registrado
+- El código DEBE expirar en 10 minutos
+- El sistema DEBE permitir máximo 10 intentos de verificación
+- Tras verificar el código exitosamente, DEBE redirigir a `/reset-password`
+- El usuario DEBE poder ingresar una nueva contraseña
+- La nueva contraseña DEBE cumplir con los mismos requisitos de REQ-AUTH-005
+- Al cambiar exitosamente, DEBE invalidar todas las sesiones existentes del usuario
+
+#### Scenario: User requests password reset
+- **WHEN** el usuario ingresa su email en `/forgot-password` y hace clic en "Enviar código"
+- **THEN** el sistema envía un código de 6 dígitos al email y muestra el formulario de verificación
+
+#### Scenario: User verifies reset code
+- **WHEN** el usuario ingresa el código correcto en `/forgot-password`
+- **THEN** el sistema redirige a `/reset-password` con el token de reset
+
+#### Scenario: User sets new password
+- **WHEN** el usuario ingresa una contraseña válida en `/reset-password`
+- **THEN** el sistema actualiza la contraseña, invalida todas las sesiones y redirige a `/login`
+
+#### Scenario: Invalid email
+- **WHEN** el usuario ingresa un email que no existe en el sistema
+- **THEN** el sistema muestra mensaje de éxito genérico (no revelar si el email existe)
+
+#### Scenario: Expired reset code
+- **WHEN** el usuario intenta verificar un código expirado
+- **THEN** el sistema muestra error y ofrece reenviar el código
+
+### REQ-AUTH-017: Cambiar contraseña
+
+El sistema DEBE permitir al usuario autenticado cambiar su contraseña desde la página de perfil.
+
+- El usuario DEBE ingresar su contraseña actual para confirmar
+- La nueva contraseña DEBE cumplir con los mismos requisitos de REQ-AUTH-005
+- La nueva contraseña NO DEBE ser igual a la contraseña actual
+- Al cambiar exitosamente, DEBE mantener las sesiones activas
+- El endpoint DEBE ser `POST /api/auth/change-password`
+
+#### Scenario: User changes password successfully
+- **WHEN** el usuario ingresa contraseña actual correcta y nueva contraseña válida
+- **THEN** el sistema actualiza la contraseña y muestra confirmación
+
+#### Scenario: Wrong current password
+- **WHEN** el usuario ingresa la contraseña actual incorrecta
+- **THEN** el sistema muestra error "La contraseña actual es incorrecta"
+
+#### Scenario: New password matches current
+- **WHEN** el usuario ingresa una nueva contraseña igual a la actual
+- **THEN** el sistema muestra error "La nueva contraseña debe ser diferente a la actual"

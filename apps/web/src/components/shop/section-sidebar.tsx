@@ -14,8 +14,21 @@ interface SectionSidebarProps {
   sections: Section[]
 }
 
+function scrollToSection(slug: string) {
+  const el = document.getElementById(`section-${slug}`)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth' })
+  }
+}
+
 export function SectionSidebar({ sections }: SectionSidebarProps) {
   const [activeSection, setActiveSection] = useState<string>('')
+
+  useEffect(() => {
+    if (window.location.hash) {
+      window.history.replaceState(null, '', '/shop')
+    }
+  }, [])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -50,9 +63,9 @@ export function SectionSidebar({ sections }: SectionSidebarProps) {
           <ul className="space-y-1">
             {sections.map((section) => (
               <li key={section.slug}>
-                <a
-                  href={`#section-${section.slug}`}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
+                <button
+                  onClick={() => scrollToSection(section.slug)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors w-full text-left ${
                     activeSection === section.slug
                       ? 'bg-purple-600 text-white'
                       : 'text-gray-300 hover:bg-gray-800 hover:text-white'
@@ -68,7 +81,7 @@ export function SectionSidebar({ sections }: SectionSidebarProps) {
                     />
                   )}
                   {section.title}
-                </a>
+                </button>
               </li>
             ))}
           </ul>
@@ -80,9 +93,9 @@ export function SectionSidebar({ sections }: SectionSidebarProps) {
         <div className="overflow-x-auto scrollbar-hide">
           <div className="flex gap-2 px-4 py-3">
             {sections.map((section) => (
-              <a
+              <button
                 key={section.slug}
-                href={`#section-${section.slug}`}
+                onClick={() => scrollToSection(section.slug)}
                 className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm transition-colors ${
                   activeSection === section.slug
                     ? 'bg-purple-600 text-white'
@@ -90,7 +103,7 @@ export function SectionSidebar({ sections }: SectionSidebarProps) {
                 }`}
               >
                 {section.title}
-              </a>
+              </button>
             ))}
           </div>
         </div>

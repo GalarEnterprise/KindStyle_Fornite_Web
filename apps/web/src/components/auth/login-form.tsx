@@ -152,6 +152,11 @@ export function LoginForm() {
           Regístrate
         </a>
       </p>
+      <p className="mt-2 text-center text-sm text-gray-400">
+        <a href="/forgot-password" className="font-semibold text-purple-400 hover:text-purple-300">
+          ¿Olvidaste tu contraseña?
+        </a>
+      </p>
     </div>
   )
 }

@@ -213,7 +213,7 @@ export function CartProvider({
     []
   )
 
-  const count = items.reduce((acc, item) => acc + item.quantity, 0)
+  const count = items.length
 
   return (
     <CartContext.Provider

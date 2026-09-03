@@ -77,6 +77,13 @@ export function UserMenu() {
                 Mi Cuenta
               </Link>
               <Link
+                href="/account/profile"
+                onClick={handleMenuClick}
+                className="block px-4 py-2 text-sm text-gray-300 transition hover:bg-gray-800 hover:text-white"
+              >
+                Mi Perfil
+              </Link>
+              <Link
                 href="/account/requests"
                 onClick={handleMenuClick}
                 className="block px-4 py-2 text-sm text-gray-300 transition hover:bg-gray-800 hover:text-white"

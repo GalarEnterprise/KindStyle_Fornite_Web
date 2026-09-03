@@ -3,7 +3,7 @@ import { encryptCredentials } from '@/lib/services/cart/crypto-service'
 import { SPECIAL_TYPES, type AddToCartInput, type UpdateCartItemInput } from '@/lib/validators/cart'
 import { Prisma, type CartItemType, type GiftabilityStatus, type ProductType } from '@prisma/client'
 
-const MAX_QUANTITY = 10
+const MAX_QUANTITY = 1
 
 export interface CartBundleComponent {
   productId: string
@@ -134,7 +134,7 @@ export async function getCart(userId: string): Promise<CartItemWithProduct[]> {
       result.push({
         id: item.id,
         productId: item.product_id,
-        quantity: item.quantity,
+        quantity: 1,
         type: item.type,
         createdAt: item.created_at,
         bundleOfferId: item.bundle_offer_id,
@@ -152,7 +152,7 @@ export async function getCart(userId: string): Promise<CartItemWithProduct[]> {
     result.push({
       id: item.id,
       productId: item.product_id,
-      quantity: item.quantity,
+      quantity: 1,
       type: item.type,
       createdAt: item.created_at,
       bundleOfferId: null,
@@ -216,18 +216,19 @@ export async function addItem(userId: string, input: AddToCartInput) {
   })
 
   if (existing) {
-    const newQuantity = Math.min(existing.quantity + input.quantity, MAX_QUANTITY)
-    const updated = await db.cartItem.update({
-      where: { id: existing.id },
-      data: { quantity: newQuantity },
-    })
-    return { success: true as const, data: { id: updated.id, quantity: updated.quantity } }
+    return {
+      success: false as const,
+      error: {
+        code: 'ITEM_ALREADY_IN_CART',
+        message: 'Ese artículo ya está en tu carrito',
+      },
+    }
   }
 
   const data: Prisma.CartItemUncheckedCreateInput = {
     user_id: userId,
     product_id: input.productId,
-    quantity: input.quantity,
+    quantity: 1,
     type: mapProductTypeToCartType(product.type),
   }
 
@@ -245,7 +246,7 @@ export async function addBundleItem(
   userId: string,
   input: { offerId: string; quantity?: number }
 ) {
-  const quantity = Math.min(Math.max(input.quantity ?? 1, 1), MAX_QUANTITY)
+  const quantity = 1
 
   const bundle = await getBundleByOfferId(input.offerId)
 
@@ -270,14 +271,12 @@ export async function addBundleItem(
   const requiresManualReview = bundle.giftable === 'UNKNOWN'
 
   if (existing) {
-    const newQuantity = Math.min(existing.quantity + quantity, MAX_QUANTITY)
-    const updated = await db.cartItem.update({
-      where: { id: existing.id },
-      data: { quantity: newQuantity },
-    })
     return {
-      success: true as const,
-      data: { id: updated.id, quantity: updated.quantity, requiresManualReview },
+      success: false as const,
+      error: {
+        code: 'ITEM_ALREADY_IN_CART',
+        message: 'Ese artículo ya está en tu carrito',
+      },
     }
   }
 

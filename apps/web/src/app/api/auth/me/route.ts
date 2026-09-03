@@ -31,6 +31,7 @@ export async function GET(request: NextRequest) {
         role: true,
         verification_status: true,
         created_at: true,
+        password_hash: true,
       },
     })
 
@@ -41,7 +42,8 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ success: true, data: user })
+    const { password_hash, ...userData } = user
+    return NextResponse.json({ success: true, data: { ...userData, hasPassword: !!password_hash } })
   } catch (error) {
     console.error('[API /api/auth/me] Error:', error)
     return NextResponse.json(

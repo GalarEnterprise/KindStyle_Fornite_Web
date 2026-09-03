@@ -58,14 +58,8 @@ export function CartView() {
     item.type === 'BUNDLE'
       ? (item.bundlePriceVbucks ?? 0) * 0.075
       : ((item.product?.adminPriceMxn ?? (item.product?.priceVbucks ?? 0) * 0.075) as number)
-  const totalMxn = items.reduce((acc, item) => acc + itemPriceMxn(item) * item.quantity, 0)
-  const totalVbucks = items.reduce((acc, item) => acc + itemPriceVbucks(item) * item.quantity, 0)
-
-  async function handleQuantity(item: CartItem, delta: number) {
-    const next = Math.min(10, Math.max(1, item.quantity + delta))
-    if (next === item.quantity) return
-    await updateItem(item.id, { quantity: next })
-  }
+  const totalMxn = items.reduce((acc, item) => acc + itemPriceMxn(item), 0)
+  const totalVbucks = items.reduce((acc, item) => acc + itemPriceVbucks(item), 0)
 
   async function handleCredentialsSubmit(credentials: { epicEmail: string; epicPassword: string }) {
     if (!editingCredentials) return
@@ -163,7 +157,7 @@ export function CartView() {
                       {itemPriceVbucks(item).toLocaleString('es-MX')} V-Bucks
                     </span>
                     <span className="text-gray-400">
-                      ${itemPriceMxn(item).toFixed(2)} MXN c/u
+                      ${itemPriceMxn(item).toFixed(2)} MXN
                     </span>
                     <span className="rounded-full bg-gray-800 px-2 py-0.5 text-gray-300">
                       {TYPE_LABELS[item.type] ?? item.type}
@@ -202,23 +196,7 @@ export function CartView() {
               </div>
 
             <div className="flex items-center gap-3">
-              <div className="flex items-center rounded-md border border-gray-700">
-                <button
-                  onClick={() => handleQuantity(item, -1)}
-                  disabled={item.quantity <= 1}
-                  className="px-2.5 py-1 text-sm text-gray-300 hover:bg-gray-800 disabled:opacity-30"
-                >
-                  −
-                </button>
-                <span className="w-8 text-center text-sm font-medium text-white">{item.quantity}</span>
-                <button
-                  onClick={() => handleQuantity(item, 1)}
-                  disabled={item.quantity >= 10}
-                  className="px-2.5 py-1 text-sm text-gray-300 hover:bg-gray-800 disabled:opacity-30"
-                >
-                  +
-                </button>
-              </div>
+              <span className="text-sm font-medium text-gray-400">1 unidad</span>
 
               <button
                 onClick={() => removeItem(item.id)}
