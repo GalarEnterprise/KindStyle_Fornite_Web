@@ -71,6 +71,7 @@ model Session {
 enum VerificationCodeType {
   EMAIL_VERIFICATION
   PASSWORD_RESET
+  LOGIN
 }
 
 model VerificationCode {

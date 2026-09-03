@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db/client'
 import { VerifyCodeSchema } from '@/lib/validators/auth'
 import { generateResetToken } from '@/lib/services/auth/token-service'
-
-const MAX_ATTEMPTS = 10
+import { verifyCode } from '@/lib/services/auth/verification-code-service'
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,57 +20,12 @@ export async function POST(request: NextRequest) {
 
     const { email, code } = validated.data
 
-    // Find the most recent unverified PASSWORD_RESET code
-    const verification = await db.verificationCode.findFirst({
-      where: {
-        email,
-        code,
-        type: 'PASSWORD_RESET',
-        verified: false,
-      },
-      orderBy: { created_at: 'desc' },
-    })
+    const result = await verifyCode(email, code, 'PASSWORD_RESET')
 
-    if (!verification) {
-      return NextResponse.json(
-        { success: false, error: { code: 'INVALID_CODE', message: 'Código inválido' } },
-        { status: 400 }
-      )
+    if (!result.success) {
+      const status = result.error?.code === 'BLOCKED' ? 429 : 400
+      return NextResponse.json(result, { status })
     }
-
-    // Check attempts
-    if (verification.attempts >= MAX_ATTEMPTS) {
-      return NextResponse.json(
-        { success: false, error: { code: 'BLOCKED', message: 'Demasiados intentos. Solicita un nuevo código' } },
-        { status: 429 }
-      )
-    }
-
-    // Check expiry
-    if (verification.expires_at < new Date()) {
-      return NextResponse.json(
-        { success: false, error: { code: 'EXPIRED', message: 'El código ha expirado. Solicita uno nuevo' } },
-        { status: 400 }
-      )
-    }
-
-    // Verify code
-    if (verification.code !== code) {
-      await db.verificationCode.update({
-        where: { id: verification.id },
-        data: { attempts: { increment: 1 } },
-      })
-      return NextResponse.json(
-        { success: false, error: { code: 'INVALID_CODE', message: 'Código incorrecto' } },
-        { status: 400 }
-      )
-    }
-
-    // Mark code as verified
-    await db.verificationCode.update({
-      where: { id: verification.id },
-      data: { verified: true },
-    })
 
     // Generate a short-lived token for the reset password step
     const token = await generateResetToken(email)

@@ -1,13 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db/client'
 import { sendVerificationCode } from '@/lib/services/auth/email-service'
+import { createVerificationCode, checkCooldown } from '@/lib/services/auth/verification-code-service'
 import { ForgotPasswordSchema } from '@/lib/validators/auth'
-
-const CODE_EXPIRY_MS = 10 * 60 * 1000 // 10 minutes
-
-function generateCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString()
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,31 +32,23 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // Invalidate any existing PASSWORD_RESET codes for this email
-    await db.verificationCode.updateMany({
-      where: {
-        email,
-        type: 'PASSWORD_RESET',
-        verified: false,
-      },
-      data: { verified: true },
-    })
+    // Check cooldown
+    const cooldown = await checkCooldown(email, 'PASSWORD_RESET')
+    if (!cooldown.allowed) {
+      return {
+        success: false,
+        error: {
+          code: 'COOLDOWN',
+          message: `Debes esperar ${cooldown.cooldownRemaining} segundos antes de solicitar otro código`,
+          cooldownRemaining: cooldown.cooldownRemaining,
+        },
+      }
+    }
 
-    // Generate new code
-    const code = generateCode()
+    // Create new code
+    const { code } = await createVerificationCode(email, 'PASSWORD_RESET', user.id)
 
-    await db.verificationCode.create({
-      data: {
-        user_id: user.id,
-        email,
-        code,
-        type: 'PASSWORD_RESET',
-        expires_at: new Date(Date.now() + CODE_EXPIRY_MS),
-        attempts: 0,
-      },
-    })
-
-    await sendVerificationCode(email, code)
+    await sendVerificationCode({ email, code, context: 'PASSWORD_RESET' })
 
     return NextResponse.json({
       success: true,

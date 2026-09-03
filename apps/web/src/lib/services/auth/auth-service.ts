@@ -2,16 +2,8 @@ import { db } from '@/lib/db/client'
 import { sendVerificationCode } from './email-service'
 import { generateTokenPair, verifyRefreshToken } from './token-service'
 import { createSession, enforceSessionLimit, findSessionByRefreshToken, revokeSession } from './session-service'
+import { createVerificationCode, verifyCode as verifyCodeService, checkCooldown } from './verification-code-service'
 import bcrypt from 'bcryptjs'
-
-const CODE_EXPIRY_MS = 10 * 60 * 1000 // 10 minutes
-const BLOCK_DURATION_MS = 15 * 60 * 1000 // 15 minutes
-const COOLDOWN_MS = 3 * 60 * 1000 // 3 minutes
-const MAX_ATTEMPTS = 10
-
-function generateCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString()
-}
 
 export async function register(email: string) {
   const existing = await db.user.findUnique({ where: { email } })
@@ -19,64 +11,28 @@ export async function register(email: string) {
     return { success: false, error: { code: 'EMAIL_EXISTS', message: 'Este email ya está registrado' } }
   }
 
-  const code = generateCode()
+  // Check cooldown
+  const cooldown = await checkCooldown(email, 'EMAIL_VERIFICATION')
+  if (!cooldown.allowed) {
+    return {
+      success: false,
+      error: {
+        code: 'COOLDOWN',
+        message: `Debes esperar ${cooldown.cooldownRemaining} segundos antes de solicitar otro código`,
+        cooldownRemaining: cooldown.cooldownRemaining,
+      },
+    }
+  }
 
-  await db.verificationCode.create({
-    data: {
-      email,
-      code,
-      expires_at: new Date(Date.now() + CODE_EXPIRY_MS),
-      attempts: 0,
-    },
-  })
+  const { code } = await createVerificationCode(email, 'EMAIL_VERIFICATION')
 
-  await sendVerificationCode(email, code)
+  await sendVerificationCode({ email, code, context: 'REGISTRATION' })
 
   return { success: true, message: 'Código de verificación enviado' }
 }
 
-export async function verifyCode(email: string, code: string) {
-  const verification = await db.verificationCode.findFirst({
-    where: { email, code, verified: false },
-    orderBy: { created_at: 'desc' },
-  })
-
-  if (!verification) {
-    return { success: false, error: { code: 'INVALID_CODE', message: 'Código inválido' } }
-  }
-
-  if (verification.attempts >= MAX_ATTEMPTS) {
-    const blockedUntil = new Date(verification.created_at.getTime() + BLOCK_DURATION_MS)
-    if (new Date() < blockedUntil) {
-      return {
-        success: false,
-        error: {
-          code: 'BLOCKED',
-          message: `Demasiados intentos. Intenta de nuevo en ${Math.ceil((blockedUntil.getTime() - Date.now()) / 60000)} minutos`,
-          blockedUntil: blockedUntil.toISOString(),
-        },
-      }
-    }
-  }
-
-  if (verification.expires_at < new Date()) {
-    return { success: false, error: { code: 'EXPIRED', message: 'El código ha expirado' } }
-  }
-
-  if (verification.code !== code) {
-    await db.verificationCode.update({
-      where: { id: verification.id },
-      data: { attempts: { increment: 1 } },
-    })
-    return { success: false, error: { code: 'INVALID_CODE', message: 'Código incorrecto' } }
-  }
-
-  await db.verificationCode.update({
-    where: { id: verification.id },
-    data: { verified: true },
-  })
-
-  return { success: true, verified: true }
+export async function verifyCode(email: string, code: string, type: 'EMAIL_VERIFICATION' | 'PASSWORD_RESET' | 'LOGIN' = 'EMAIL_VERIFICATION') {
+  return verifyCodeService(email, code, type)
 }
 
 export async function createUser(email: string) {
@@ -95,8 +51,39 @@ export async function createUser(email: string) {
   return user
 }
 
+export async function requestLoginCode(email: string) {
+  // Check cooldown
+  const cooldown = await checkCooldown(email, 'LOGIN')
+  if (!cooldown.allowed) {
+    return {
+      success: false,
+      error: {
+        code: 'COOLDOWN',
+        message: `Debes esperar ${cooldown.cooldownRemaining} segundos antes de solicitar otro código`,
+        cooldownRemaining: cooldown.cooldownRemaining,
+      },
+    }
+  }
+
+  // Check if user exists
+  const user = await db.user.findUnique({ where: { email } })
+
+  // Always return success to prevent email enumeration
+  if (!user) {
+    return { success: true, message: 'Si el email está registrado, recibirás un código de verificación' }
+  }
+
+  // Create LOGIN code
+  const { code } = await createVerificationCode(email, 'LOGIN', user.id)
+
+  // Send code via email
+  await sendVerificationCode({ email, code, context: 'LOGIN' })
+
+  return { success: true, message: 'Si el email está registrado, recibirás un código de verificación' }
+}
+
 export async function loginWithCode(email: string, code: string, userAgent?: string, ipAddress?: string) {
-  const verificationResult = await verifyCode(email, code)
+  const verificationResult = await verifyCode(email, code, 'LOGIN')
   if (!verificationResult.success) {
     return verificationResult
   }
