@@ -1,162 +1,477 @@
 {
- "status": 200,
- "data": {
-  "hash": "fixture-hash",
-  "date": "2026-09-02T00:00:00Z",
-  "entries": [
-   {
-    "regularPrice": 500,
-    "finalPrice": 500,
-    "devName": "[VIRTUAL]1 x Harley's Boogie Bat for 500 MtxCurrency",
-    "offerId": "v2:/051282d868250b6bd8cf3222ed35540224a0dbd2b6931f2d47a042c9d4b4b4aa",
-    "giftable": true,
-    "layout": {
-     "id": "SummerBatman",
-     "name": "Batcaciones de verano",
-     "index": 14,
-     "rank": 193,
-     "showIneligibleOffers": "always",
-     "useWidePreview": false,
-     "displayType": "tileGrid"
-    },
-    "colors": {
-     "color1": "f86b71ff",
-     "color3": "ffa9a5ff",
-     "textBackgroundColor": "784042ff"
-    },
-    "newDisplayAsset": {
-     "id": "DAv2_Pickaxe_HumorShale",
-     "cosmeticId": "Pickaxe_HumorShale",
-     "materialInstances": [],
-     "renderImages": [
+  "status": 200,
+  "data": {
+    "hash": "fixture-hash",
+    "date": "2026-09-02T00:00:00Z",
+    "entries": [
       {
-       "productTag": "Product.BR",
-       "fileName": "cosmo__917aa7e125549189_29c0c4191e61fb71.png",
-       "image": "https://fortnite-api.com/images/cosmetics/br/newdisplayassets/917aa7e125549189/renderimage_0.png"
+        "regularPrice": 500,
+        "finalPrice": 500,
+        "devName": "[VIRTUAL]1 x Harley's Boogie Bat for 500 MtxCurrency",
+        "offerId": "v2:/051282d868250b6bd8cf3222ed35540224a0dbd2b6931f2d47a042c9d4b4b4aa",
+        "giftable": true,
+        "layout": {
+          "id": "SummerBatman",
+          "name": "Batcaciones de verano",
+          "index": 14,
+          "rank": 193,
+          "showIneligibleOffers": "always",
+          "useWidePreview": false,
+          "displayType": "tileGrid"
+        },
+        "colors": {
+          "color1": "f86b71ff",
+          "color3": "ffa9a5ff",
+          "textBackgroundColor": "784042ff"
+        },
+        "newDisplayAsset": {
+          "id": "DAv2_Pickaxe_HumorShale",
+          "cosmeticId": "Pickaxe_HumorShale",
+          "materialInstances": [],
+          "renderImages": [
+            {
+              "productTag": "Product.BR",
+              "fileName": "cosmo__917aa7e125549189_29c0c4191e61fb71.png",
+              "image": "https://fortnite-api.com/images/cosmetics/br/newdisplayassets/917aa7e125549189/renderimage_0.png"
+            }
+          ]
+        },
+        "brItems": [
+          {
+            "id": "Pickaxe_HumorShale",
+            "name": "Bate acuático de Harley",
+            "description": "Ideal para las vacaciones.",
+            "type": {
+              "value": "pickaxe",
+              "displayValue": "Pico",
+              "backendValue": "AthenaPickaxe"
+            },
+            "rarity": {
+              "value": "dc",
+              "displayValue": "SERIE DE DC",
+              "backendValue": "EFortRarity::Rare"
+            },
+            "series": {
+              "value": "SERIE DE DC",
+              "image": "https://fortnite-api.com/images/cosmetics/series/dcuseries.png",
+              "colors": [
+                "007af1ff",
+                "0053a9ff",
+                "003f82ff",
+                "003169ff",
+                "001f47ff"
+              ],
+              "backendValue": "DCUSeries"
+            },
+            "images": {
+              "smallIcon": "https://fortnite-api.com/images/cosmetics/br/pickaxe_humorshale/smallicon.png",
+              "icon": "https://fortnite-api.com/images/cosmetics/br/pickaxe_humorshale/icon.png",
+              "featured": "https://fortnite-api.com/images/cosmetics/br/pickaxe_humorshale/featured.png"
+            }
+          }
+        ]
+      },
+      {
+        "regularPrice": 400,
+        "finalPrice": 400,
+        "devName": "[VIRTUAL]1 x Shelly for 400 MtxCurrency",
+        "offerId": "v2:/a37840e75b24477357dd4dd79457daa74ce544d3141c59a250385a29426b0c15",
+        "giftable": true,
+        "layout": {
+          "id": "SzamanfnLockerBundle",
+          "name": "Taquilla de Szamanfn",
+          "category": "Lotes de taquilla",
+          "index": 25,
+          "rank": 180,
+          "showIneligibleOffers": "always",
+          "useWidePreview": false,
+          "displayType": "tileGrid"
+        },
+        "brItems": [
+          {
+            "id": "BID_792_SlurpMonsterSummer",
+            "name": "Alejo el cangrejo",
+            "description": "Si sientes un pellizquito en la espalda, es que te quiere.",
+            "type": {
+              "value": "backpack",
+              "displayValue": "Accesorio mochilero",
+              "backendValue": "AthenaBackpack"
+            },
+            "rarity": {
+              "value": "slurp",
+              "displayValue": "Series sorbete",
+              "backendValue": "EFortRarity::Rare"
+            },
+            "series": {
+              "value": "Series sorbete",
+              "colors": [
+                "1df9f7ff",
+                "37daadff",
+                "00c3f1ff",
+                "1b91ffff",
+                "1c8bdaff"
+              ],
+              "backendValue": "SlurpSeries"
+            },
+            "images": {
+              "smallIcon": "https://fortnite-api.com/images/cosmetics/br/bid_792_slurpmonstersummer/smallicon.png",
+              "icon": "https://fortnite-api.com/images/cosmetics/br/bid_792_slurpmonstersummer/icon.png",
+              "featured": "https://fortnite-api.com/images/cosmetics/br/bid_792_slurpmonstersummer/featured.png"
+            },
+            "showcaseVideo": "UyIEVraCL-o"
+          }
+        ]
+      },
+      {
+        "regularPrice": 400,
+        "finalPrice": 400,
+        "devName": "[VIRTUAL]1 x Dark Grasp for 400 MtxCurrency",
+        "offerId": "v2:/1425cd1874f141c1a429eec666ff5fd90c02b414c0a7a803e7100c1374c0d2fd",
+        "giftable": true,
+        "colors": {
+          "color1": "008b91ff",
+          "color2": "002452ff",
+          "color3": "004c66ff",
+          "textBackgroundColor": "002452ff"
+        },
+        "brItems": [
+          {
+            "id": "Backpack_AllKnowing",
+            "name": "Control oscuro",
+            "description": "Un terrible poder al alcance de los dedos.",
+            "type": {
+              "value": "backpack",
+              "displayValue": "Accesorio mochilero",
+              "backendValue": "AthenaBackpack"
+            },
+            "rarity": {
+              "value": "rare",
+              "displayValue": "Raro",
+              "backendValue": "EFortRarity::Rare"
+            },
+            "images": {
+              "smallIcon": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/smallicon.png",
+              "icon": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/icon.png",
+              "featured": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/featured.png"
+            }
+          }
+        ]
+      },
+      {
+        "regularPrice": 400,
+        "finalPrice": 400,
+        "offerId": "v2:/dup-loose-1",
+        "giftable": true,
+        "layout": {
+          "id": "DupTab",
+          "name": "Duplicados",
+          "index": 99,
+          "rank": 1,
+          "showIneligibleOffers": "always",
+          "useWidePreview": false,
+          "displayType": "tileGrid"
+        },
+        "brItems": [
+          {
+            "id": "Backpack_AllKnowing",
+            "name": "Control oscuro",
+            "description": "Un terrible poder al alcance de los dedos.",
+            "type": {
+              "value": "backpack",
+              "displayValue": "Accesorio mochilero",
+              "backendValue": "AthenaBackpack"
+            },
+            "rarity": {
+              "value": "rare",
+              "displayValue": "Raro",
+              "backendValue": "EFortRarity::Rare"
+            },
+            "images": {
+              "smallIcon": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/smallicon.png",
+              "icon": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/icon.png",
+              "featured": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/featured.png"
+            }
+          }
+        ],
+        "items": [
+          {
+            "id": "Backpack_AllKnowing",
+            "name": "Control oscuro",
+            "description": "Un terrible poder al alcance de los dedos.",
+            "type": {
+              "value": "backpack",
+              "displayValue": "Accesorio mochilero",
+              "backendValue": "AthenaBackpack"
+            },
+            "rarity": {
+              "value": "rare",
+              "displayValue": "Raro",
+              "backendValue": "EFortRarity::Rare"
+            },
+            "images": {
+              "smallIcon": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/smallicon.png",
+              "icon": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/icon.png",
+              "featured": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/featured.png"
+            }
+          }
+        ]
+      },
+      {
+        "regularPrice": 2000,
+        "finalPrice": 2000,
+        "offerId": "v2:/dup-bundle-1",
+        "giftable": true,
+        "layout": {
+          "id": "DupBundle",
+          "name": "Duplicados",
+          "index": 98,
+          "rank": 0,
+          "showIneligibleOffers": "always",
+          "useWidePreview": false,
+          "displayType": "tileGrid"
+        },
+        "bundle": {
+          "name": "Lote duplicado",
+          "info": "Bundle",
+          "image": "https://fortnite-api.com/images/bundle.png"
+        },
+        "brItems": [
+          {
+            "id": "Pickaxe_HumorShale",
+            "name": "Bate acuático de Harley",
+            "description": "Ideal para las vacaciones.",
+            "type": {
+              "value": "pickaxe",
+              "displayValue": "Pico",
+              "backendValue": "AthenaPickaxe"
+            },
+            "rarity": {
+              "value": "dc",
+              "displayValue": "SERIE DE DC",
+              "backendValue": "EFortRarity::Rare"
+            },
+            "series": {
+              "value": "SERIE DE DC",
+              "image": "https://fortnite-api.com/images/cosmetics/series/dcuseries.png",
+              "colors": [
+                "007af1ff",
+                "0053a9ff",
+                "003f82ff",
+                "003169ff",
+                "001f47ff"
+              ],
+              "backendValue": "DCUSeries"
+            },
+            "images": {
+              "smallIcon": "https://fortnite-api.com/images/cosmetics/br/pickaxe_humorshale/smallicon.png",
+              "icon": "https://fortnite-api.com/images/cosmetics/br/pickaxe_humorshale/icon.png",
+              "featured": "https://fortnite-api.com/images/cosmetics/br/pickaxe_humorshale/featured.png"
+            }
+          },
+          {
+            "id": "Backpack_AllKnowing",
+            "name": "Control oscuro",
+            "description": "Un terrible poder al alcance de los dedos.",
+            "type": {
+              "value": "backpack",
+              "displayValue": "Accesorio mochilero",
+              "backendValue": "AthenaBackpack"
+            },
+            "rarity": {
+              "value": "rare",
+              "displayValue": "Raro",
+              "backendValue": "EFortRarity::Rare"
+            },
+            "images": {
+              "smallIcon": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/smallicon.png",
+              "icon": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/icon.png",
+              "featured": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/featured.png"
+            }
+          }
+        ],
+        "items": [
+          {
+            "id": "Pickaxe_HumorShale",
+            "name": "Bate acuático de Harley",
+            "description": "Ideal para las vacaciones.",
+            "type": {
+              "value": "pickaxe",
+              "displayValue": "Pico",
+              "backendValue": "AthenaPickaxe"
+            },
+            "rarity": {
+              "value": "dc",
+              "displayValue": "SERIE DE DC",
+              "backendValue": "EFortRarity::Rare"
+            },
+            "series": {
+              "value": "SERIE DE DC",
+              "image": "https://fortnite-api.com/images/cosmetics/series/dcuseries.png",
+              "colors": [
+                "007af1ff",
+                "0053a9ff",
+                "003f82ff",
+                "003169ff",
+                "001f47ff"
+              ],
+              "backendValue": "DCUSeries"
+            },
+            "images": {
+              "smallIcon": "https://fortnite-api.com/images/cosmetics/br/pickaxe_humorshale/smallicon.png",
+              "icon": "https://fortnite-api.com/images/cosmetics/br/pickaxe_humorshale/icon.png",
+              "featured": "https://fortnite-api.com/images/cosmetics/br/pickaxe_humorshale/featured.png"
+            }
+          },
+          {
+            "id": "Backpack_AllKnowing",
+            "name": "Control oscuro",
+            "description": "Un terrible poder al alcance de los dedos.",
+            "type": {
+              "value": "backpack",
+              "displayValue": "Accesorio mochilero",
+              "backendValue": "AthenaBackpack"
+            },
+            "rarity": {
+              "value": "rare",
+              "displayValue": "Raro",
+              "backendValue": "EFortRarity::Rare"
+            },
+            "images": {
+              "smallIcon": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/smallicon.png",
+              "icon": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/icon.png",
+              "featured": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/featured.png"
+            }
+          }
+        ]
+      },
+      {
+        "regularPrice": 2000,
+        "finalPrice": 2000,
+        "offerId": "v2:/dup-bundle-1",
+        "giftable": true,
+        "layout": {
+          "id": "DupBundle",
+          "name": "Duplicados",
+          "index": 98,
+          "rank": 0,
+          "showIneligibleOffers": "always",
+          "useWidePreview": false,
+          "displayType": "tileGrid"
+        },
+        "bundle": {
+          "name": "Lote duplicado",
+          "info": "Bundle",
+          "image": "https://fortnite-api.com/images/bundle.png"
+        },
+        "brItems": [
+          {
+            "id": "Pickaxe_HumorShale",
+            "name": "Bate acuático de Harley",
+            "description": "Ideal para las vacaciones.",
+            "type": {
+              "value": "pickaxe",
+              "displayValue": "Pico",
+              "backendValue": "AthenaPickaxe"
+            },
+            "rarity": {
+              "value": "dc",
+              "displayValue": "SERIE DE DC",
+              "backendValue": "EFortRarity::Rare"
+            },
+            "series": {
+              "value": "SERIE DE DC",
+              "image": "https://fortnite-api.com/images/cosmetics/series/dcuseries.png",
+              "colors": [
+                "007af1ff",
+                "0053a9ff",
+                "003f82ff",
+                "003169ff",
+                "001f47ff"
+              ],
+              "backendValue": "DCUSeries"
+            },
+            "images": {
+              "smallIcon": "https://fortnite-api.com/images/cosmetics/br/pickaxe_humorshale/smallicon.png",
+              "icon": "https://fortnite-api.com/images/cosmetics/br/pickaxe_humorshale/icon.png",
+              "featured": "https://fortnite-api.com/images/cosmetics/br/pickaxe_humorshale/featured.png"
+            }
+          },
+          {
+            "id": "Backpack_AllKnowing",
+            "name": "Control oscuro",
+            "description": "Un terrible poder al alcance de los dedos.",
+            "type": {
+              "value": "backpack",
+              "displayValue": "Accesorio mochilero",
+              "backendValue": "AthenaBackpack"
+            },
+            "rarity": {
+              "value": "rare",
+              "displayValue": "Raro",
+              "backendValue": "EFortRarity::Rare"
+            },
+            "images": {
+              "smallIcon": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/smallicon.png",
+              "icon": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/icon.png",
+              "featured": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/featured.png"
+            }
+          }
+        ],
+        "items": [
+          {
+            "id": "Pickaxe_HumorShale",
+            "name": "Bate acuático de Harley",
+            "description": "Ideal para las vacaciones.",
+            "type": {
+              "value": "pickaxe",
+              "displayValue": "Pico",
+              "backendValue": "AthenaPickaxe"
+            },
+            "rarity": {
+              "value": "dc",
+              "displayValue": "SERIE DE DC",
+              "backendValue": "EFortRarity::Rare"
+            },
+            "series": {
+              "value": "SERIE DE DC",
+              "image": "https://fortnite-api.com/images/cosmetics/series/dcuseries.png",
+              "colors": [
+                "007af1ff",
+                "0053a9ff",
+                "003f82ff",
+                "003169ff",
+                "001f47ff"
+              ],
+              "backendValue": "DCUSeries"
+            },
+            "images": {
+              "smallIcon": "https://fortnite-api.com/images/cosmetics/br/pickaxe_humorshale/smallicon.png",
+              "icon": "https://fortnite-api.com/images/cosmetics/br/pickaxe_humorshale/icon.png",
+              "featured": "https://fortnite-api.com/images/cosmetics/br/pickaxe_humorshale/featured.png"
+            }
+          },
+          {
+            "id": "Backpack_AllKnowing",
+            "name": "Control oscuro",
+            "description": "Un terrible poder al alcance de los dedos.",
+            "type": {
+              "value": "backpack",
+              "displayValue": "Accesorio mochilero",
+              "backendValue": "AthenaBackpack"
+            },
+            "rarity": {
+              "value": "rare",
+              "displayValue": "Raro",
+              "backendValue": "EFortRarity::Rare"
+            },
+            "images": {
+              "smallIcon": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/smallicon.png",
+              "icon": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/icon.png",
+              "featured": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/featured.png"
+            }
+          }
+        ]
       }
-     ]
-    },
-    "brItems": [
-     {
-      "id": "Pickaxe_HumorShale",
-      "name": "Bate acuático de Harley",
-      "description": "Ideal para las vacaciones.",
-      "type": {
-       "value": "pickaxe",
-       "displayValue": "Pico",
-       "backendValue": "AthenaPickaxe"
-      },
-      "rarity": {
-       "value": "dc",
-       "displayValue": "SERIE DE DC",
-       "backendValue": "EFortRarity::Rare"
-      },
-      "series": {
-       "value": "SERIE DE DC",
-       "image": "https://fortnite-api.com/images/cosmetics/series/dcuseries.png",
-       "colors": [
-        "007af1ff",
-        "0053a9ff",
-        "003f82ff",
-        "003169ff",
-        "001f47ff"
-       ],
-       "backendValue": "DCUSeries"
-      },
-      "images": {
-       "smallIcon": "https://fortnite-api.com/images/cosmetics/br/pickaxe_humorshale/smallicon.png",
-       "icon": "https://fortnite-api.com/images/cosmetics/br/pickaxe_humorshale/icon.png",
-       "featured": "https://fortnite-api.com/images/cosmetics/br/pickaxe_humorshale/featured.png"
-      }
-     }
     ]
-   },
-   {
-    "regularPrice": 400,
-    "finalPrice": 400,
-    "devName": "[VIRTUAL]1 x Shelly for 400 MtxCurrency",
-    "offerId": "v2:/a37840e75b24477357dd4dd79457daa74ce544d3141c59a250385a29426b0c15",
-    "giftable": true,
-    "layout": {
-     "id": "SzamanfnLockerBundle",
-     "name": "Taquilla de Szamanfn",
-     "category": "Lotes de taquilla",
-     "index": 25,
-     "rank": 180,
-     "showIneligibleOffers": "always",
-     "useWidePreview": false,
-     "displayType": "tileGrid"
-    },
-    "brItems": [
-     {
-      "id": "BID_792_SlurpMonsterSummer",
-      "name": "Alejo el cangrejo",
-      "description": "Si sientes un pellizquito en la espalda, es que te quiere.",
-      "type": {
-       "value": "backpack",
-       "displayValue": "Accesorio mochilero",
-       "backendValue": "AthenaBackpack"
-      },
-      "rarity": {
-       "value": "slurp",
-       "displayValue": "Series sorbete",
-       "backendValue": "EFortRarity::Rare"
-      },
-      "series": {
-       "value": "Series sorbete",
-       "colors": [
-        "1df9f7ff",
-        "37daadff",
-        "00c3f1ff",
-        "1b91ffff",
-        "1c8bdaff"
-       ],
-       "backendValue": "SlurpSeries"
-      },
-      "images": {
-       "smallIcon": "https://fortnite-api.com/images/cosmetics/br/bid_792_slurpmonstersummer/smallicon.png",
-       "icon": "https://fortnite-api.com/images/cosmetics/br/bid_792_slurpmonstersummer/icon.png",
-       "featured": "https://fortnite-api.com/images/cosmetics/br/bid_792_slurpmonstersummer/featured.png"
-      },
-      "showcaseVideo": "UyIEVraCL-o"
-     }
-    ]
-   },
-   {
-    "regularPrice": 400,
-    "finalPrice": 400,
-    "devName": "[VIRTUAL]1 x Dark Grasp for 400 MtxCurrency",
-    "offerId": "v2:/1425cd1874f141c1a429eec666ff5fd90c02b414c0a7a803e7100c1374c0d2fd",
-    "giftable": true,
-    "colors": {
-     "color1": "008b91ff",
-     "color2": "002452ff",
-     "color3": "004c66ff",
-     "textBackgroundColor": "002452ff"
-    },
-    "brItems": [
-     {
-      "id": "Backpack_AllKnowing",
-      "name": "Control oscuro",
-      "description": "Un terrible poder al alcance de los dedos.",
-      "type": {
-       "value": "backpack",
-       "displayValue": "Accesorio mochilero",
-       "backendValue": "AthenaBackpack"
-      },
-      "rarity": {
-       "value": "rare",
-       "displayValue": "Raro",
-       "backendValue": "EFortRarity::Rare"
-      },
-      "images": {
-       "smallIcon": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/smallicon.png",
-       "icon": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/icon.png",
-       "featured": "https://fortnite-api.com/images/cosmetics/br/backpack_allknowing/featured.png"
-      }
-     }
-    ]
-   }
-  ]
- }
+  }
 }

@@ -309,32 +309,49 @@ export async function syncCatalog(): Promise<void> {
       bundleInfo: { name: string; info: string; image: string } | null
     }> = []
 
+    const seenLooseItemKeys = new Set<string>()
+    const seenBundleItemKeys = new Set<string>()
+
     for (const entry of shopResponse.data.entries) {
       const entryItems = entry.brItems ?? entry.items
       if (!entryItems || entryItems.length === 0) continue
 
-      const isBundle = entryItems.length > 1
-      const primaryItem = entryItems[0]
+      const isBundle = entryItems.length > 1 || Boolean(entry.bundle)
       const section = entry.layout?.name || null
       const layoutId = entry.layout?.id || null
       const theme = extractEntryTheme(entry)
       const offerId = entry.offerId || null
-      const bundleInfo = entry.bundle || null
+      const bundleInfo = entry.bundle || (entryItems.length > 1
+        ? {
+            name: `${entryItems[0].name} y más`,
+            info: 'Bundle',
+            image: entryItems[0].images?.featured || entryItems[0].images?.icon || '',
+          }
+        : null)
 
-      if (isBundle) {
-        const productType = 'BUNDLE'
+      for (const item of entryItems) {
+        if (isBundle) {
+          const bundleKey = `${offerId ?? 'no-offer'}|${item.id}`
+          if (seenBundleItemKeys.has(bundleKey)) continue
+          seenBundleItemKeys.add(bundleKey)
+        } else {
+          if (seenLooseItemKeys.has(item.id)) continue
+          seenLooseItemKeys.add(item.id)
+        }
+
+        const productType = resolveType(item.type?.value)
         normalizedProducts.push({
-          fortniteProductId: primaryItem.id,
-          name: `${primaryItem.name} Bundle`,
-          slug: normalizeSlug(`${primaryItem.name} Bundle`),
-          description: primaryItem.description || null,
+          fortniteProductId: item.id,
+          name: item.name,
+          slug: normalizeSlug(item.name),
+          description: item.description || null,
           type: productType,
-          rarity: resolveRarity(primaryItem.rarity?.value),
-          series: primaryItem.series?.value || null,
+          rarity: resolveRarity(item.rarity?.value),
+          series: item.series?.value || null,
           priceVbucks: entry.finalPrice || entry.regularPrice || 0,
-          imageUrl: primaryItem.images?.featured || primaryItem.images?.icon || null,
-          iconUrl: primaryItem.images?.icon || null,
-          featuredImageUrl: primaryItem.images?.featured || null,
+          imageUrl: item.images?.featured || item.images?.icon || null,
+          iconUrl: item.images?.icon || null,
+          featuredImageUrl: item.images?.featured || null,
           giftable: resolveGiftability(productType),
           section,
           layoutId,
@@ -342,45 +359,28 @@ export async function syncCatalog(): Promise<void> {
           offerId,
           bundleInfo,
         })
-      } else {
-        for (const item of entryItems) {
-          const productType = resolveType(item.type?.value)
-          normalizedProducts.push({
-            fortniteProductId: item.id,
-            name: item.name,
-            slug: normalizeSlug(item.name),
-            description: item.description || null,
-            type: productType,
-            rarity: resolveRarity(item.rarity?.value),
-            series: item.series?.value || null,
-            priceVbucks: entry.finalPrice || entry.regularPrice || 0,
-            imageUrl: item.images?.featured || item.images?.icon || null,
-            iconUrl: item.images?.icon || null,
-            featuredImageUrl: item.images?.featured || null,
-            giftable: resolveGiftability(productType),
-            section,
-            layoutId,
-            theme,
-            offerId,
-            bundleInfo,
-          })
-        }
       }
     }
 
     await prisma.$transaction(async (tx) => {
       let nextSkuNum = 0
       const lastProduct = await tx.product.findFirst({
+        where: {
+          internal_sku: { gte: 'FORT-000000', lte: 'FORT-999999' },
+        },
         orderBy: { internal_sku: 'desc' },
         select: { internal_sku: true },
       })
       if (lastProduct) {
-        nextSkuNum = parseInt(lastProduct.internal_sku.replace('FORT-', ''), 10)
+        const parsed = parseInt(lastProduct.internal_sku.replace('FORT-', ''), 10)
+        if (Number.isFinite(parsed)) {
+          nextSkuNum = parsed
+        }
       }
 
       const productMap = new Map<string, string>()
 
-      for (const product of normalizedProducts) {
+      for (const product of new Map(normalizedProducts.map((p) => [p.fortniteProductId, p])).values()) {
         const existing = await tx.product.findFirst({
           where: { fortnite_product_id: product.fortniteProductId },
         })

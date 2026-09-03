@@ -27,16 +27,21 @@ El sistema DEBE mostrar el apodo del usuario como trigger del menú desplegable 
 El sistema DEBE mostrar las siguientes opciones en el menú desplegable:
 
 - Mi Cuenta (enlace a `/account`)
+- Notificaciones (con badge de contador, abre panel de notificaciones)
 - Mis Pedidos (enlace a `/account/requests`)
 - Cerrar Sesión (acción de logout)
 
 #### Scenario: Dropdown shows all menu items
 - **WHEN** el usuario hace clic en el trigger del menú
-- **THEN** se despliega un menú con las tres opciones: Mi Cuenta, Mis Pedidos, Cerrar Sesión
+- **THEN** se despliega un menú con las cuatro opciones: Mi Cuenta, Notificaciones, Mis Pedidos, Cerrar Sesión
 
 #### Scenario: Mi Cuenta navigates to account page
 - **WHEN** el usuario hace clic en "Mi Cuenta"
 - **THEN** el sistema navega a `/account`
+
+#### Scenario: Notificaciones shows notification panel
+- **WHEN** el usuario hace clic en "Notificaciones"
+- **THEN** el sistema muestra el panel de notificaciones con la lista de notificaciones del usuario
 
 #### Scenario: Mis Pedidos navigates to requests page
 - **WHEN** el usuario hace clic en "Mis Pedidos"
@@ -45,6 +50,22 @@ El sistema DEBE mostrar las siguientes opciones en el menú desplegable:
 #### Scenario: Cerrar Sesión logs out the user
 - **WHEN** el usuario hace clic en "Cerrar Sesión"
 - **THEN** el sistema ejecuta la acción de logout y redirige a `/`
+
+### Requirement: Notifications badge in dropdown
+
+El sistema DEBE mostrar un badge con el contador de notificaciones no leídas junto al item "Notificaciones" en el menú desplegable.
+
+#### Scenario: Badge shows unread count
+- **WHEN** el usuario tiene notificaciones no leídas
+- **THEN** el item "Notificaciones" muestra un badge con el contador de no leídas
+
+#### Scenario: Badge hidden when no unread
+- **WHEN** el usuario no tiene notificaciones no leídas
+- **THEN** el item "Notificaciones" NO muestra badge
+
+#### Scenario: Badge updates in real-time
+- **WHEN** el usuario recibe una nueva notificación
+- **THEN** el badge se actualiza inmediatamente sin necesidad de recargar el menú
 
 ### Requirement: Dropdown behavior
 

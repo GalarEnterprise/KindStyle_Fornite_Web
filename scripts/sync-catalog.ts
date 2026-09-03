@@ -180,6 +180,8 @@ async function syncCatalog() {
 
   let productCount = 0
   let itemCount = 0
+  const seenLooseItemIds = new Set<string>()
+  const seenBundleItemKeys = new Set<string>()
 
   for (const entry of shopData.data.entries) {
     // Only process entries with brItems (Battle Royale items)
@@ -187,7 +189,18 @@ async function syncCatalog() {
       continue
     }
 
+    const isBundle = entry.brItems.length > 1 || Boolean(entry.bundle)
+
     for (const item of entry.brItems) {
+      if (isBundle) {
+        const bundleKey = `${entry.offerId ?? 'no-offer'}|${item.id}`
+        if (seenBundleItemKeys.has(bundleKey)) continue
+        seenBundleItemKeys.add(bundleKey)
+      } else {
+        if (seenLooseItemIds.has(item.id)) continue
+        seenLooseItemIds.add(item.id)
+      }
+
       const slug = `${normalizeSlug(item.name)}-${item.id}`
 
       // Upsert product

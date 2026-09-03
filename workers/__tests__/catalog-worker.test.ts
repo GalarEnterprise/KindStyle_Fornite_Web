@@ -154,6 +154,21 @@ describe('catalog-worker syncCatalog (shop entries)', () => {
     expect(third.layout_id).toBeNull()
   })
 
+  it('never creates duplicate loose shop items and expands bundles into component rows', async () => {
+    stubFetch()
+
+    await syncCatalog()
+
+    const loose = state.createdShopItems.filter((item) => !item.bundle_info)
+    const looseProductIds = loose.map((item) => item.product_id)
+    expect(new Set(looseProductIds).size).toBe(looseProductIds.length)
+
+    const bundleRows = state.createdShopItems.filter((item) => Boolean(item.bundle_info))
+    const bundleKeys = bundleRows.map((item) => `${String(item.offer_id)}|${String(item.product_id)}`)
+    expect(new Set(bundleKeys).size).toBe(bundleKeys.length)
+    expect(bundleRows.length).toBe(2)
+  })
+
   it('does not create a new snapshot when checksum matches and skips banner endpoints', async () => {
     const checksum = createHash('sha256')
       .update(JSON.stringify(shopFixture.data, Object.keys(shopFixture.data).sort()))

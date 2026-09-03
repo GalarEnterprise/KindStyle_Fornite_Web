@@ -81,4 +81,42 @@ describe('API /api/cart POST', () => {
     expect(response.status).toBe(201)
     expect(data.success).toBe(true)
   })
+
+  it('responde 200 con pending_resolution cuando el bundle choca con artículos del carrito', async () => {
+    mockGetAuthUser.mockResolvedValue({ userId: USER_ID } as never)
+    mockAddItem.mockResolvedValue({
+      success: true,
+      data: {
+        status: 'pending_resolution',
+        resolutionId: '423e4567-e89b-12d3-a456-426614174003',
+        expiresAt: new Date(),
+        bundle: { offerId: 'v2:/bundle-1', name: 'Pack Completo', imageUrl: null, priceVbucks: 2500 },
+        conflictingItems: [
+          { cartItemId: 'ci-1', productId: PRODUCT_ID, name: 'Skin A', slug: 'skin-a' },
+        ],
+      },
+    })
+
+    const response = await createCartItem(makePost({ offerId: 'v2:/bundle-1' }))
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.success).toBe(true)
+    expect(data.data.status).toBe('pending_resolution')
+    expect(data.data.conflictingItems).toHaveLength(1)
+  })
+
+  it('mapea CART_CONFLICT_RESOLUTION_INVALID a 409', async () => {
+    mockGetAuthUser.mockResolvedValue({ userId: USER_ID } as never)
+    mockAddItem.mockResolvedValue({
+      success: false,
+      error: { code: 'CART_CONFLICT_RESOLUTION_INVALID', message: 'La confirmación ya fue usada' },
+    })
+
+    const response = await createCartItem(makePost({ offerId: 'v2:/bundle-1' }))
+    const data = await response.json()
+
+    expect(response.status).toBe(409)
+    expect(data.error.code).toBe('CART_CONFLICT_RESOLUTION_INVALID')
+  })
 })

@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
-import { useCart } from '@/hooks/use-cart'
+import { useCart, type BundleConflictPayload } from '@/hooks/use-cart'
+import { BundleConflictDialog } from '@/components/cart/bundle-conflict-dialog'
 
 interface BundleCardProps {
   offerId: string | null
@@ -18,8 +19,11 @@ export function BundleCard({ offerId, name, imageUrl, priceVbucks, components }:
   const [loading, setLoading] = useState(false)
   const [added, setAdded] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [conflict, setConflict] = useState<BundleConflictPayload | null>(null)
+  const [conflictLoading, setConflictLoading] = useState(false)
+  const [conflictError, setConflictError] = useState<string | null>(null)
   const { isAuthenticated, isLoading } = useAuth()
-  const { addBundleItem, items } = useCart()
+  const { addBundleItem, resolveConflict, items } = useCart()
   const router = useRouter()
 
   const vbucksRate = 7.5
@@ -43,11 +47,32 @@ export function BundleCard({ offerId, name, imageUrl, priceVbucks, components }:
     const result = await addBundleItem(offerId, 1)
     setLoading(false)
 
-    if (result.success) {
+    if (result.conflict) {
+      setConflictError(null)
+      setConflict(result.conflict)
+    } else if (result.success) {
       setAdded(true)
       setTimeout(() => setAdded(false), 2000)
     } else {
       setError(result.error ?? 'Error al agregar al carrito')
+    }
+  }
+
+  async function handleDecision(decision: 'keep_separate' | 'replace_with_bundle') {
+    if (!conflict) return
+    setConflictLoading(true)
+    const result = await resolveConflict(conflict.resolutionId, decision)
+    setConflictLoading(false)
+
+    if (!result.success) {
+      setConflictError(result.error ?? 'No se pudo confirmar la decisión. Vuelve a intentarlo.')
+      return
+    }
+
+    setConflict(null)
+    if (decision === 'replace_with_bundle') {
+      setAdded(true)
+      setTimeout(() => setAdded(false), 2000)
     }
   }
 
@@ -134,6 +159,20 @@ export function BundleCard({ offerId, name, imageUrl, priceVbucks, components }:
         </svg>
         {isInCart ? '✓ En carrito' : added ? '✓ Agregado' : loading ? 'Agregando...' : 'Agregar'}
       </button>
+
+      {conflict && (
+        <BundleConflictDialog
+          conflict={conflict}
+          loading={conflictLoading}
+          error={conflictError}
+          onKeepSeparate={() => handleDecision('keep_separate')}
+          onReplaceWithBundle={() => handleDecision('replace_with_bundle')}
+          onCancel={() => {
+            setConflict(null)
+            setConflictError(null)
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -27,6 +27,17 @@ export const UpdateCartItemSchema = z.object({
   message: 'Debe proporcionar quantity o credentials',
 })
 
+export const CART_CONFLICT_DECISIONS = ['keep_separate', 'replace_with_bundle'] as const
+
+export const ResolveCartConflictSchema = z.object({
+  resolutionId: z.string().uuid('resolutionId debe ser un UUID válido'),
+  decision: z.enum(CART_CONFLICT_DECISIONS, {
+    errorMap: () => ({ message: 'decision debe ser keep_separate o replace_with_bundle' }),
+  }),
+})
+
 export type CredentialsInput = z.infer<typeof CredentialsSchema>
 export type AddToCartInput = z.infer<typeof AddToCartSchema>
 export type UpdateCartItemInput = z.infer<typeof UpdateCartItemSchema>
+export type CartConflictDecision = z.infer<typeof ResolveCartConflictSchema>['decision']
+export type ResolveCartConflictInput = z.infer<typeof ResolveCartConflictSchema>

@@ -1,14 +1,18 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { useCart } from '@/hooks/use-cart'
+import { useCart, type BundleConflictPayload } from '@/hooks/use-cart'
 import { parseAddIntent } from '@/lib/utils/add-intent'
 import { ValidatedBanner } from '@/components/ui/validated-banner'
+import { BundleConflictDialog } from '@/components/cart/bundle-conflict-dialog'
 
 export function PostLoginHandler() {
-  const { addItem, addBundleItem } = useCart()
+  const { addItem, addBundleItem, resolveConflict } = useCart()
   const [showSuccess, setShowSuccess] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [conflict, setConflict] = useState<BundleConflictPayload | null>(null)
+  const [conflictLoading, setConflictLoading] = useState(false)
+  const [conflictError, setConflictError] = useState<string | null>(null)
   const processed = useRef(false)
 
   useEffect(() => {
@@ -31,7 +35,9 @@ export function PostLoginHandler() {
         }
       } else if (intent?.type === 'bundle') {
         const result = await addBundleItem(intent.value)
-        if (!result.success) {
+        if (result.conflict) {
+          setConflict(result.conflict)
+        } else if (!result.success) {
           setError(result.error ?? 'No se pudo agregar el bundle al carrito')
         }
       }
@@ -45,6 +51,25 @@ export function PostLoginHandler() {
     handle()
   }, [addItem, addBundleItem])
 
+  async function handleDecision(decision: 'keep_separate' | 'replace_with_bundle') {
+    if (!conflict) return
+    setConflictLoading(true)
+    const result = await resolveConflict(conflict.resolutionId, decision)
+    setConflictLoading(false)
+
+    if (!result.success) {
+      setConflictError(result.error ?? 'No se pudo confirmar la decisión. Vuelve a intentarlo.')
+      return
+    }
+
+    setConflict(null)
+  }
+
+  function closeConflict() {
+    setConflict(null)
+    setConflictError(null)
+  }
+
   useEffect(() => {
     if (!showSuccess) return
     const timeout = setTimeout(() => setShowSuccess(false), 3000)
@@ -57,11 +82,21 @@ export function PostLoginHandler() {
     return () => clearTimeout(timeout)
   }, [error])
 
-  if (!showSuccess && !error) return null
+  if (!showSuccess && !error && !conflict) return null
 
   return (
     <>
       {showSuccess && <ValidatedBanner />}
+      {conflict && (
+        <BundleConflictDialog
+          conflict={conflict}
+          loading={conflictLoading}
+          error={conflictError}
+          onKeepSeparate={() => handleDecision('keep_separate')}
+          onReplaceWithBundle={() => handleDecision('replace_with_bundle')}
+          onCancel={closeConflict}
+        />
+      )}
       {error && (
         <div className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-16">
           <div className="pointer-events-auto flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2.5 shadow-lg">

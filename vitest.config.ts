@@ -5,7 +5,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['apps/web/src/**/*.test.ts', 'packages/**/*.test.ts', 'workers/**/*.test.ts'],
+    include: ['apps/web/src/**/*.test.{ts,tsx}', 'packages/**/*.test.ts', 'workers/**/*.test.ts'],
   },
   esbuild: {
     jsx: 'automatic',

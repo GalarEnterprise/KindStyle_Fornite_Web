@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { AddToCartSchema, UpdateCartItemSchema, CredentialsSchema } from '@/lib/validators/cart'
+import {
+  AddToCartSchema,
+  UpdateCartItemSchema,
+  CredentialsSchema,
+  ResolveCartConflictSchema,
+} from '@/lib/validators/cart'
 
 describe('Cart Validators', () => {
    describe('AddToCartSchema', () => {
@@ -70,6 +75,52 @@ describe('Cart Validators', () => {
     it('rechaza quantity fuera de rango', () => {
       expect(UpdateCartItemSchema.safeParse({ quantity: 0 }).success).toBe(false)
       expect(UpdateCartItemSchema.safeParse({ quantity: 2 }).success).toBe(false)
+    })
+  })
+
+  describe('ResolveCartConflictSchema', () => {
+    const RESOLUTION_ID = '323e4567-e89b-12d3-a456-426614174002'
+
+    it('acepta una decisión keep_separate válida', () => {
+      const result = ResolveCartConflictSchema.safeParse({
+        resolutionId: RESOLUTION_ID,
+        decision: 'keep_separate',
+      })
+      expect(result.success).toBe(true)
+    })
+
+    it('acepta una decisión replace_with_bundle válida', () => {
+      const result = ResolveCartConflictSchema.safeParse({
+        resolutionId: RESOLUTION_ID,
+        decision: 'replace_with_bundle',
+      })
+      expect(result.success).toBe(true)
+    })
+
+    it('rechaza una resolución sin decision', () => {
+      const result = ResolveCartConflictSchema.safeParse({ resolutionId: RESOLUTION_ID })
+      expect(result.success).toBe(false)
+    })
+
+    it('rechaza una resolución sin resolutionId', () => {
+      const result = ResolveCartConflictSchema.safeParse({ decision: 'keep_separate' })
+      expect(result.success).toBe(false)
+    })
+
+    it('rechaza decision fuera del contrato', () => {
+      const result = ResolveCartConflictSchema.safeParse({
+        resolutionId: RESOLUTION_ID,
+        decision: 'remove_everything',
+      })
+      expect(result.success).toBe(false)
+    })
+
+    it('rechaza resolutionId que no es UUID', () => {
+      const result = ResolveCartConflictSchema.safeParse({
+        resolutionId: 'no-es-uuid',
+        decision: 'keep_separate',
+      })
+      expect(result.success).toBe(false)
     })
   })
 

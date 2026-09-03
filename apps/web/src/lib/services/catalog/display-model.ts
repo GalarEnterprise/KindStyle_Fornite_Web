@@ -217,10 +217,31 @@ function groupBundlesByOfferId(
   return entries
 }
 
+function dedupeShopItems(items: ShopItemWithProduct[]): ShopItemWithProduct[] {
+  const seenLooseProductIds = new Set<string>()
+  const seenBundleKeys = new Set<string>()
+  const deduped: ShopItemWithProduct[] = []
+
+  for (const item of items) {
+    if (item.bundle_info) {
+      const key = `${item.offer_id ?? item.id}|${item.product_id}`
+      if (seenBundleKeys.has(key)) continue
+      seenBundleKeys.add(key)
+    } else {
+      if (seenLooseProductIds.has(item.product_id)) continue
+      seenLooseProductIds.add(item.product_id)
+    }
+    deduped.push(item)
+  }
+
+  return deduped
+}
+
 export function buildShopDisplayModel(
-  items: ShopItemWithProduct[],
+  rawItems: ShopItemWithProduct[],
   referenceBanners: BannerReference[] = []
 ): ShopDisplaySection[] {
+  const items = dedupeShopItems(rawItems)
   const sections = extractSections(items)
   const sectionsWithEntries: ShopDisplaySection[] = []
   const takenBannerIds = new Set<string>()

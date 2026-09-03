@@ -4,7 +4,6 @@ import Link from 'next/link'
 import { useAuth } from '@/hooks/use-auth'
 import { useFriendship } from '@/hooks/use-friendship'
 import { CartBadge } from '@/components/cart/cart-badge'
-import { NotificationBell } from '@/components/notifications/notification-bell'
 import { UserMenu } from '@/components/layout/user-menu'
 
 export function BotsCta() {
@@ -52,21 +51,12 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 border-b border-gray-800 bg-gray-950/95 backdrop-blur">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-        <Link href="/" className="text-lg font-bold text-white">
+        <Link href="/shop" className="flex-shrink-0 text-lg font-bold text-white hover:text-gray-200 transition">
           Kind<span className="text-purple-500">Style</span>
         </Link>
 
         <nav className="flex items-center gap-1 sm:gap-2">
-          <Link
-            href="/shop"
-            className="rounded-md px-3 py-1.5 text-sm font-medium text-gray-300 transition hover:bg-gray-800 hover:text-white"
-          >
-            Tienda
-          </Link>
-
           <CartBadge />
-
-          {isAuthenticated && <NotificationBell />}
 
           <BotsCta />
 

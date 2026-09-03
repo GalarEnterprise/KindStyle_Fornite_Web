@@ -10,7 +10,7 @@ Proporciona un layout compartido para la sección de cuenta del usuario con side
 
 El sistema DEBE proporcionar un layout compartido para todas las páginas bajo `/account/*` que incluya un sidebar de navegación.
 
-- El sidebar DEBE mostrarse en todas las páginas de cuenta (`/account`, `/account/profile`, `/account/bots`, `/account/requests`, `/account/payment`, `/account/notifications`)
+- El sidebar DEBE mostrarse en todas las páginas de cuenta (`/account/profile`, `/account/bots`, `/account/requests`, `/account/payment`, `/account/notifications`)
 - El sidebar DEBE incluir enlaces a todas las secciones de cuenta
 - La sección actual DEBE estar resaltada visualmente en el sidebar
 - El sidebar DEBE ser colapsable en dispositivos móviles (hamburger menu)
@@ -55,22 +55,6 @@ El sistema DEBE proporcionar un enlace "Volver a la tienda" visible desde cualqu
 #### Scenario: Return to shop from any account page
 - **WHEN** el usuario está en cualquier página de cuenta y hace clic en "Volver a la tienda"
 - **THEN** el sistema navega a `/shop`
-
-### Requirement: Account page without redundant cards
-
-La página `/account` (dashboard) DEBE mostrar un resumen de cuenta sin duplicar los enlaces del sidebar.
-
-- La página DEBE mostrar información del usuario (apodo, email, rol)
-- La página DEBE eliminar las 4 tarjetas de navegación que duplican el sidebar
-- La página DEBE mantener un diseño limpio y enfocado en información
-
-#### Scenario: Dashboard shows user summary
-- **WHEN** el usuario accede a `/account`
-- **THEN** la página muestra un resumen con apodo, email, rol y fecha de registro
-
-#### Scenario: No duplicate navigation cards
-- **WHEN** el usuario accede a `/account`
-- **THEN** la página NO muestra tarjetas de navegación que dupliquen el sidebar
 
 ### Requirement: Responsive account layout
 

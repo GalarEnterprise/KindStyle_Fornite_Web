@@ -52,13 +52,17 @@ function createMockShopItem(overrides: Partial<ShopItem> = {}): ShopItem {
   }
 }
 
+let mockSeq = 0
+
 function createMockShopItemWithProduct(
   productOverrides: Partial<Product> = {},
   itemOverrides: Partial<ShopItem> = {}
 ): ShopItemWithProduct {
+  mockSeq++
+  const productId = `test-product-${mockSeq}`
   return {
-    ...createMockShopItem(itemOverrides),
-    product: createMockProduct(productOverrides),
+    ...createMockShopItem({ id: `test-shop-item-${mockSeq}`, product_id: productId, ...itemOverrides }),
+    product: createMockProduct({ id: productId, ...productOverrides }),
   } as ShopItemWithProduct
 }
 
@@ -137,6 +141,43 @@ describe('buildShopDisplayModel', () => {
 
     expect(result).toHaveLength(1)
     expect(result[0].title).toBe('Otros')
+  })
+
+  it('should show each loose product only once across sections', () => {
+    const items = [
+      createMockShopItemWithProduct(
+        { id: 'prod-dup', name: 'Duplicado' },
+        { id: 'si-1', product_id: 'prod-dup', section: 'Destacados', display_order: 0 }
+      ),
+      createMockShopItemWithProduct(
+        { id: 'prod-dup', name: 'Duplicado' },
+        { id: 'si-2', product_id: 'prod-dup', section: 'Diaria', display_order: 1 }
+      ),
+    ]
+
+    const result = buildShopDisplayModel(items)
+    const totalEntries = result.reduce((acc, s) => acc + s.entries.length, 0)
+
+    expect(totalEntries).toBe(1)
+  })
+
+  it('should dedupe repeated bundle rows for the same offer and product', () => {
+    const bundleInfo = { name: 'Lote', info: 'Bundle', image: 'https://example.com/b.png' }
+    const items = [
+      createMockShopItemWithProduct(
+        { id: 'prod-a', name: 'A' },
+        { id: 'si-1', product_id: 'prod-a', section: 'Lotes', offer_id: 'offer-1', bundle_info: bundleInfo, display_order: 0 }
+      ),
+      createMockShopItemWithProduct(
+        { id: 'prod-a', name: 'A' },
+        { id: 'si-2', product_id: 'prod-a', section: 'Lotes', offer_id: 'offer-1', bundle_info: bundleInfo, display_order: 1 }
+      ),
+    ]
+
+    const result = buildShopDisplayModel(items)
+
+    expect(result).toHaveLength(1)
+    expect(result[0].entries).toHaveLength(1)
   })
 })
 

@@ -80,6 +80,8 @@ export async function createSnapshot(
     })
 
     let displayOrder = 0
+    const seenLooseProductIds = new Set<string>()
+    const seenBundleKeys = new Set<string>()
 
     for (const [entryIndex, entry] of shopResponse.data.entries.entries()) {
       const productsForEntry = normalizedProducts.filter((p) => {
@@ -91,6 +93,15 @@ export async function createSnapshot(
       const bundleInfo = (entry as any).bundle || null
 
       for (const product of productsForEntry) {
+        if (bundleInfo) {
+          const bundleKey = `${offerId ?? section ?? 'no-offer'}|${product.fortniteProductId}`
+          if (seenBundleKeys.has(bundleKey)) continue
+          seenBundleKeys.add(bundleKey)
+        } else {
+          if (seenLooseProductIds.has(product.fortniteProductId)) continue
+          seenLooseProductIds.add(product.fortniteProductId)
+        }
+
         const dbProduct = await tx.product.findFirst({
           where: { fortnite_product_id: product.fortniteProductId },
         })

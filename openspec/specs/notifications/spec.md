@@ -101,33 +101,33 @@ The system SHALL dispatch notifications to the appropriate channels based on eve
 - **THEN** system generates a wa.me link with pre-filled message
 
 ### Requirement: Notification Bell Icon
-The system SHALL display a bell icon in the application header.
+The system SHALL display a bell icon within the user dropdown menu (not in the main header).
 
-#### Scenario: Bell icon visible
-- **WHEN** user is authenticated
-- **THEN** header displays a bell icon with unread count badge
+#### Scenario: Bell icon visible in user dropdown
+- **WHEN** user is authenticated and opens the user dropdown menu
+- **THEN** dropdown displays a bell icon with unread count badge next to the "Notificaciones" item
 
-#### Scenario: Badge shows unread count
+#### Scenario: Badge shows unread count in dropdown
 - **WHEN** user has unread notifications
-- **THEN** bell icon displays a badge with the unread count
+- **THEN** bell icon in dropdown displays a badge with the unread count
 
-#### Scenario: Badge hidden when no unread
+#### Scenario: Badge hidden when no unread in dropdown
 - **WHEN** user has no unread notifications
-- **THEN** bell icon badge is hidden
+- **THEN** bell icon in dropdown badge is hidden
 
 ### Requirement: Notification Dropdown
-The system SHALL display a dropdown panel when the bell icon is clicked.
+The system SHALL display the notification panel when clicking the "Notificaciones" item in the user dropdown menu.
 
-#### Scenario: Open dropdown
-- **WHEN** user clicks the bell icon
-- **THEN** system displays a dropdown panel with notification list
+#### Scenario: Open notification panel from user dropdown
+- **WHEN** user clicks "Notificaciones" in the user dropdown
+- **THEN** system closes the user dropdown and displays the notification panel
 
-#### Scenario: Close dropdown
-- **WHEN** user clicks outside the dropdown or on the bell icon again
-- **THEN** system closes the dropdown panel
+#### Scenario: Close notification panel
+- **WHEN** user clicks outside the notification panel
+- **THEN** system closes the panel
 
 #### Scenario: Notification list display
-- **WHEN** dropdown is open
+- **WHEN** notification panel is open
 - **THEN** system shows notifications ordered by `created_at DESC` with title, message, and relative time
 
 #### Scenario: Empty state

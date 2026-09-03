@@ -1,14 +1,34 @@
 import { db } from '@/lib/db/client'
 import { encryptCredentials } from '@/lib/services/cart/crypto-service'
-import { SPECIAL_TYPES, type AddToCartInput, type UpdateCartItemInput } from '@/lib/validators/cart'
+import {
+  SPECIAL_TYPES,
+  type AddToCartInput,
+  type ResolveCartConflictInput,
+  type UpdateCartItemInput,
+} from '@/lib/validators/cart'
 import { Prisma, type CartItemType, type GiftabilityStatus, type ProductType } from '@prisma/client'
 
 const MAX_QUANTITY = 1
+const CART_CONFLICT_RESOLUTION_TTL_MS = 10 * 60 * 1000
 
 export interface CartBundleComponent {
   productId: string
   name: string
   slug: string
+}
+
+export interface CartConflictItem {
+  cartItemId: string
+  productId: string
+  name: string
+  slug: string
+}
+
+export interface CartConflictBundleInfo {
+  offerId: string
+  name: string
+  imageUrl: string | null
+  priceVbucks: number
 }
 
 export interface CartItemWithProduct {
@@ -94,6 +114,46 @@ export async function getBundleByOfferId(offerId: string): Promise<BundleOffer |
     priceVbucks: firstItem.price_vbucks,
     components,
     giftable: firstItem.product.giftable,
+  }
+}
+
+function bundleCompositionSignature(components: CartBundleComponent[], priceVbucks: number): string {
+  const ids = components.map((component) => component.productId).sort().join(',')
+  return `${priceVbucks}|${ids}`
+}
+
+async function findBundleConflicts(userId: string, bundle: BundleOffer): Promise<CartConflictItem[]> {
+  const productIds = [...new Set(bundle.components.map((component) => component.productId))]
+  if (productIds.length === 0) return []
+
+  const items = await db.cartItem.findMany({
+    where: { user_id: userId, product_id: { in: productIds }, type: { not: 'BUNDLE' } },
+  })
+
+  return items
+    .filter((item): item is typeof item & { product_id: string } => Boolean(item.product_id))
+    .map((item) => {
+      const component = bundle.components.find((candidate) => candidate.productId === item.product_id)
+      return {
+        cartItemId: item.id,
+        productId: item.product_id,
+        name: component?.name ?? '',
+        slug: component?.slug ?? '',
+      }
+    })
+}
+
+async function invalidateResolution(resolutionId: string) {
+  await db.cartConflictResolution.updateMany({
+    where: { id: resolutionId, status: 'PENDING' },
+    data: { status: 'INVALIDATED' },
+  })
+}
+
+function invalidResolution(message: string) {
+  return {
+    success: false as const,
+    error: { code: 'CART_CONFLICT_RESOLUTION_INVALID', message },
   }
 }
 
@@ -280,6 +340,38 @@ export async function addBundleItem(
     }
   }
 
+  const conflicts = await findBundleConflicts(userId, bundle)
+
+  if (conflicts.length > 0) {
+    const resolution = await db.cartConflictResolution.create({
+      data: {
+        user_id: userId,
+        bundle_offer_id: bundle.offerId,
+        bundle_name: bundle.name,
+        bundle_price_vbucks: bundle.priceVbucks,
+        bundle_components: bundle.components as unknown as Prisma.InputJsonValue,
+        conflicting_items: conflicts as unknown as Prisma.InputJsonValue,
+        expires_at: new Date(Date.now() + CART_CONFLICT_RESOLUTION_TTL_MS),
+      },
+    })
+
+    return {
+      success: true as const,
+      data: {
+        status: 'pending_resolution' as const,
+        resolutionId: resolution.id,
+        expiresAt: resolution.expires_at,
+        bundle: {
+          offerId: bundle.offerId,
+          name: bundle.name,
+          imageUrl: bundle.imageUrl,
+          priceVbucks: bundle.priceVbucks,
+        },
+        conflictingItems: conflicts,
+      },
+    }
+  }
+
   const created = await db.cartItem.create({
     data: {
       user_id: userId,
@@ -295,7 +387,145 @@ export async function addBundleItem(
 
   return {
     success: true as const,
-    data: { id: created.id, quantity: created.quantity, requiresManualReview },
+    data: {
+      status: 'added' as const,
+      id: created.id,
+      quantity: created.quantity,
+      requiresManualReview,
+    },
+  }
+}
+
+export async function resolveCartConflict(userId: string, input: ResolveCartConflictInput) {
+  const resolution = await db.cartConflictResolution.findUnique({
+    where: { id: input.resolutionId },
+  })
+
+  if (!resolution || resolution.user_id !== userId) {
+    return invalidResolution('La confirmación ya no es válida. Vuelve a agregar el bundle.')
+  }
+
+  if (resolution.status !== 'PENDING' || resolution.expires_at.getTime() < Date.now()) {
+    return invalidResolution('La confirmación expiró o ya fue usada. Vuelve a agregar el bundle.')
+  }
+
+  if (input.decision === 'keep_separate') {
+    const consumed = await db.cartConflictResolution.updateMany({
+      where: { id: resolution.id, status: 'PENDING' },
+      data: { status: 'KEPT_SEPARATE' },
+    })
+
+    if (consumed.count === 0) {
+      return invalidResolution('La confirmación ya fue usada. Vuelve a agregar el bundle.')
+    }
+
+    return {
+      success: true as const,
+      data: {
+        status: 'kept_separate' as const,
+        resolutionId: resolution.id,
+      },
+    }
+  }
+
+  const bundle = await getBundleByOfferId(resolution.bundle_offer_id)
+
+  if (!bundle || bundle.giftable === 'NOT_GIFTABLE') {
+    await invalidateResolution(resolution.id)
+    return invalidResolution('El bundle ya no está disponible. Revísalo e inténtalo de nuevo.')
+  }
+
+  const storedComponents = resolution.bundle_components as unknown as CartBundleComponent[]
+  const compositionChanged =
+    bundleCompositionSignature(storedComponents, resolution.bundle_price_vbucks) !==
+    bundleCompositionSignature(bundle.components, bundle.priceVbucks)
+
+  if (compositionChanged) {
+    await invalidateResolution(resolution.id)
+    return invalidResolution('La composición del bundle cambió. Revisa el pack antes de continuar.')
+  }
+
+  const conflicts = resolution.conflicting_items as unknown as CartConflictItem[]
+  const conflictingItemIds = conflicts.map((conflict) => conflict.cartItemId)
+
+  try {
+    const outcome = await db.$transaction(async (tx) => {
+      const consumed = await tx.cartConflictResolution.updateMany({
+        where: { id: resolution.id, status: 'PENDING', expires_at: { gt: new Date() } },
+        data: { status: 'REPLACED_BY_BUNDLE' },
+      })
+
+      if (consumed.count === 0) {
+        return { kind: 'invalid' as const }
+      }
+
+      const alreadyInCart = await tx.cartItem.findFirst({
+        where: { user_id: userId, bundle_offer_id: resolution.bundle_offer_id, product_id: null },
+      })
+
+      if (alreadyInCart) {
+        await tx.cartConflictResolution.update({
+          where: { id: resolution.id },
+          data: { status: 'INVALIDATED' },
+        })
+        return { kind: 'already' as const, itemId: alreadyInCart.id }
+      }
+
+      await tx.cartItem.deleteMany({
+        where: {
+          id: { in: conflictingItemIds },
+          user_id: userId,
+          type: { not: 'BUNDLE' },
+          product_id: { not: null },
+        },
+      })
+
+      const created = await tx.cartItem.create({
+        data: {
+          user_id: userId,
+          product_id: null,
+          quantity: 1,
+          type: 'BUNDLE',
+          bundle_offer_id: resolution.bundle_offer_id,
+          bundle_name: bundle.name,
+          bundle_price_vbucks: bundle.priceVbucks,
+          bundle_components: bundle.components as unknown as Prisma.InputJsonValue,
+        },
+      })
+
+      return { kind: 'ok' as const, created }
+    })
+
+    if (outcome.kind === 'invalid') {
+      return invalidResolution('La confirmación ya fue usada. Vuelve a agregar el bundle.')
+    }
+
+    if (outcome.kind === 'already') {
+      return {
+        success: false as const,
+        error: { code: 'ITEM_ALREADY_IN_CART', message: 'Ese artículo ya está en tu carrito' },
+      }
+    }
+
+    return {
+      success: true as const,
+      data: {
+        status: 'replaced_by_bundle' as const,
+        id: outcome.created.id,
+        quantity: outcome.created.quantity,
+        removedItemIds: conflictingItemIds,
+        requiresManualReview: bundle.giftable === 'UNKNOWN',
+      },
+    }
+  } catch (error) {
+    console.error('[cart-service] replace_with_bundle fallo, carrito sin cambios:', error)
+    return {
+      success: false as const,
+      error: {
+        code: 'CART_OPERATION_FAILED',
+        message: 'No se pudo completar la sustitución. Tu carrito no fue modificado.',
+      },
+    }
   }
 }
 

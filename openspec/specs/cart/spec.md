@@ -311,3 +311,67 @@ La interfaz DEBE reflejar la regla de una unidad tanto en el carrito como en la 
 #### Scenario: Carrito sin stepper de cantidad
 - **WHEN** un artículo está en `/cart`
 - **THEN** se muestra "1" sin controles +/− y con el botón de quitar disponible
+
+### REQ-CART-019: Resolver conflictos entre artículos y bundles
+
+El sistema MUST cumplir las reglas de resolución descritas a continuación.
+
+El sistema DEBE detectar cuando un bundle contiene uno o más artículos individuales que ya están en el carrito del usuario. La detección DEBE considerar la composición vigente del bundle y NO DEBE permitir que el carrito termine con el artículo individual y el bundle superpuestos cuando el comprador haya elegido sustituirlos.
+
+- Una adición sin conflicto transiciona directamente a `added`.
+- Una adición con conflicto transiciona a `pending_resolution` y NO modifica el carrito hasta recibir una decisión válida.
+- La decisión `keep_separate` conserva los artículos individuales y cancela la adición del bundle.
+- La decisión `replace_with_bundle` elimina únicamente los artículos individuales afectados y agrega el bundle en una operación atómica.
+- Si el bundle ya está en el carrito, el sistema DEBE conservar la regla de una unidad y responder con `ITEM_ALREADY_IN_CART`, sin abrir una nueva resolución.
+
+#### Scenario: Agregar bundle sin conflicto
+- **WHEN** el usuario agrega un bundle cuyos artículos no coinciden con ningún artículo individual del carrito
+- **THEN** el sistema agrega el bundle y responde con el carrito actualizado sin solicitar confirmación
+
+#### Scenario: Detectar artículos incluidos en el bundle
+- **WHEN** el usuario agrega un bundle que contiene uno o más artículos individuales presentes en el carrito
+- **THEN** el sistema no modifica el carrito, devuelve el estado `pending_resolution` y lista cada artículo en conflicto junto con el bundle propuesto
+
+#### Scenario: Conservar artículos individuales
+- **WHEN** el usuario elige `keep_separate` para una resolución pendiente
+- **THEN** el sistema conserva los artículos individuales, no agrega el bundle y devuelve el carrito sin cambios con estado `kept_separate`
+
+#### Scenario: Sustituir por bundle
+- **WHEN** el usuario elige `replace_with_bundle` para una resolución pendiente válida
+- **THEN** el sistema elimina los artículos individuales listados como conflicto, agrega el bundle una sola vez y devuelve el carrito actualizado con estado `replaced_by_bundle`
+
+#### Scenario: Fallo durante sustitución
+- **WHEN** no es posible eliminar los artículos en conflicto o agregar el bundle durante `replace_with_bundle`
+- **THEN** el sistema revierte toda la operación, conserva el carrito original y devuelve un error de operación sin un estado parcial
+
+### REQ-CART-020: Advertir conflictos en la interfaz de compra
+
+La interfaz MUST cumplir las reglas de advertencia descritas a continuación.
+
+La interfaz DEBE mostrar una advertencia bloqueante y comprensible cuando la API indique `pending_resolution`. La advertencia DEBE identificar el bundle, los artículos individuales afectados y ofrecer acciones para conservarlos por separado o sustituirlos por el bundle.
+
+#### Scenario: Mostrar advertencia de conflicto
+- **WHEN** la respuesta de agregar un bundle indica artículos en conflicto
+- **THEN** la interfaz muestra el diálogo de resolución y no presenta el bundle como agregado hasta que el comprador elija una alternativa
+
+#### Scenario: Cancelar la resolución
+- **WHEN** el comprador cierra o cancela la advertencia
+- **THEN** el carrito permanece sin cambios y puede continuar comprando
+
+#### Scenario: Confirmar sustitución desde la advertencia
+- **WHEN** el comprador confirma que prefiere el pack completo
+- **THEN** la interfaz solicita la sustitución y refleja un único bundle en el carrito, retirando los artículos individuales afectados
+
+### REQ-CART-021: Validar decisiones de resolución
+
+El sistema MUST validar las decisiones antes de modificar el carrito.
+
+El sistema DEBE validar que una decisión de resolución pertenece al usuario autenticado, corresponde al bundle y a los artículos reportados, y no ha sido consumida previamente. Una decisión inválida o vencida NO DEBE modificar el carrito.
+
+#### Scenario: Resolución repetida o vencida
+- **WHEN** el usuario envía una decisión para una resolución inexistente, vencida o ya resuelta
+- **THEN** el sistema responde con `CART_CONFLICT_RESOLUTION_INVALID` y conserva el carrito sin cambios
+
+#### Scenario: Bundle cambia antes de confirmar
+- **WHEN** la composición o disponibilidad del bundle ya no coincide con la información de la resolución pendiente
+- **THEN** el sistema rechaza la sustitución, informa que debe revisarse el bundle y conserva el carrito original

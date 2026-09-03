@@ -23,6 +23,7 @@ export async function GET() {
 
     const collectionsWithProducts = await Promise.all(
       collections.map(async (collection) => {
+        const seenProductIds = new Set<string>()
         const items = snapshot.shop_items
           .filter((item) => {
             if (!item.product.active || !item.product.visible) return false
@@ -32,6 +33,12 @@ export async function GET() {
             } else {
               return !item.section && item.product.type === collection.name
             }
+          })
+          .filter((item) => {
+            if (item.bundle_info) return true
+            if (seenProductIds.has(item.product.id)) return false
+            seenProductIds.add(item.product.id)
+            return true
           })
           .slice(0, 20)
           .map((item) => ({

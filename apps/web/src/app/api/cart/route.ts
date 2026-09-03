@@ -56,14 +56,21 @@ export async function POST(request: NextRequest) {
       const status =
         result.error.code === 'PRODUCT_NOT_FOUND' || result.error.code === 'BUNDLE_NOT_FOUND'
           ? 404
-          : result.error.code === 'ITEM_ALREADY_IN_CART'
+          : result.error.code === 'ITEM_ALREADY_IN_CART' ||
+              result.error.code === 'CART_CONFLICT_RESOLUTION_INVALID'
             ? 409
             : result.error.code === 'CREDENTIALS_REQUIRED' ||
                 result.error.code === 'NOT_GIFTABLE' ||
                 result.error.code === 'VALIDATION_ERROR'
               ? 422
-              : 400
+              : result.error.code === 'CART_OPERATION_FAILED'
+                ? 500
+                : 400
       return NextResponse.json(result, { status })
+    }
+
+    if ('status' in result.data && result.data.status === 'pending_resolution') {
+      return NextResponse.json(result, { status: 200 })
     }
 
     return NextResponse.json(result, { status: 201 })
