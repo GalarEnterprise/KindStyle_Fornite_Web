@@ -29,6 +29,13 @@ const MOCK_PRODUCTS = [
   { fortniteProductId: 'Contrail_MOCK_001', name: 'Disco', type: 'CONTRAIL', rarity: 'UNCOMMON', priceVbucks: 300 },
   { fortniteProductId: 'Spray_MOCK_001', name: 'Sad Tomato', type: 'SPRAY', rarity: 'UNCOMMON', priceVbucks: 150 },
   { fortniteProductId: 'LS_MOCK_001', name: 'Season 5', type: 'LOADING_SCREEN', rarity: 'UNCOMMON', priceVbucks: 200 },
+  // Special Products
+  { fortniteProductId: 'VBucks_1000', name: '1,000 V-Bucks', type: 'VBucks', rarity: 'UNCOMMON', priceVbucks: 1000 },
+  { fortniteProductId: 'VBucks_2800', name: '2,800 V-Bucks', type: 'VBucks', rarity: 'UNCOMMON', priceVbucks: 2800 },
+  { fortniteProductId: 'VBucks_5000', name: '5,000 V-Bucks', type: 'VBucks', rarity: 'UNCOMMON', priceVbucks: 5000 },
+  { fortniteProductId: 'VBucks_13500', name: '13,500 V-Bucks', type: 'VBucks', rarity: 'UNCOMMON', priceVbucks: 13500 },
+  { fortniteProductId: 'BATTLE_PASS_S28', name: 'Pase de Batalla Capítulo 5 Temporada 4', type: 'BATTLE_PASS', rarity: 'LEGENDARY', priceVbucks: 950 },
+  { fortniteProductId: 'CREW_S28', name: 'Fortnite Crew - Septiembre 2026', type: 'CREW', rarity: 'ICON_SERIES', priceVbucks: 1950 },
 ]
 
 function normalizeSlug(name: string): string {

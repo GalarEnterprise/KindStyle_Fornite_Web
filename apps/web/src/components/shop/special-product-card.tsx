@@ -1,60 +1,58 @@
 import { AddToCartButton } from '@/components/cart/add-to-cart-button'
+import type { SpecialProductType } from '@/lib/services/catalog/display-model'
 
-interface ProductCardProps {
+interface SpecialProductCardProps {
   productId?: string
   name: string
   priceVbucks: number
   priceMxn: number
   imageUrl: string | null
   iconUrl: string | null
-  rarity: string | null
   type: string
   giftable: string
   visible: boolean
+  specialType: SpecialProductType
   onAddToCart?: () => void
 }
 
-const RARITY_COLORS: Record<string, string> = {
-  COMMON: 'bg-gray-500',
-  UNCOMMON: 'bg-green-600',
-  RARE: 'bg-blue-600',
-  EPIC: 'bg-purple-600',
-  LEGENDARY: 'bg-orange-500',
-  MYTHIC: 'bg-yellow-500',
-  EXOTIC: 'bg-cyan-500',
-  ICON_SERIES: 'bg-indigo-700',
-  STAR_WARS: 'bg-yellow-700',
-  DC: 'bg-blue-900',
-  MARVEL: 'bg-red-700',
-  GAMING_LEGENDS: 'bg-purple-900',
-  LAVA: 'bg-red-600',
-  FROZEN: 'bg-blue-400',
-  SHADOW: 'bg-gray-900',
-  SLURP: 'bg-cyan-400',
-  DARK: 'bg-gray-800',
+const SPECIAL_BADGES: Record<SpecialProductType, { label: string; color: string }> = {
+  VBucks: { label: 'V-Bucks', color: 'bg-yellow-500 text-black' },
+  BATTLE_PASS: { label: 'Pase', color: 'bg-blue-600 text-white' },
+  CREW: { label: 'Crew', color: 'bg-purple-600 text-white' },
 }
 
-export function ProductCard({
+const SPECIAL_TOP_COLORS: Record<SpecialProductType, string> = {
+  VBucks: 'bg-yellow-500',
+  BATTLE_PASS: 'bg-blue-600',
+  CREW: 'bg-purple-600',
+}
+
+export function SpecialProductCard({
   productId,
   name,
   priceVbucks,
   priceMxn,
   imageUrl,
   iconUrl,
-  rarity,
   type,
   giftable,
   visible,
+  specialType,
   onAddToCart,
-}: ProductCardProps) {
+}: SpecialProductCardProps) {
   const displayImage = imageUrl || iconUrl
-  const rarityColor = rarity ? RARITY_COLORS[rarity] || 'bg-gray-500' : 'bg-gray-500'
+  const badge = SPECIAL_BADGES[specialType]
+  const topColor = SPECIAL_TOP_COLORS[specialType]
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-lg bg-gray-900 border border-gray-700 transition-all hover:border-purple-500 hover:shadow-lg hover:shadow-purple-500/20">
-      {rarity && (
-        <div className={`absolute top-0 left-0 right-0 h-1 ${rarityColor}`} />
-      )}
+      <div className={`absolute top-0 left-0 right-0 h-1 ${topColor}`} />
+
+      <div className="absolute top-2 right-2 z-10">
+        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${badge.color}`}>
+          {badge.label}
+        </span>
+      </div>
 
       <div className="aspect-square overflow-hidden bg-gray-800">
         {displayImage ? (
@@ -87,6 +85,10 @@ export function ProductCard({
         <span className="mt-0.5 text-xs text-gray-400">
           ${priceMxn.toFixed(2)} MXN
         </span>
+
+        <p className="mt-1 text-[10px] text-gray-500 leading-tight">
+          Requiere credenciales de Epic Games
+        </p>
       </div>
 
       {productId ? (
@@ -100,14 +102,14 @@ export function ProductCard({
           <svg className="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
-          Agregar
+          Comprar
         </button>
       )}
     </div>
   )
 }
 
-export function ProductCardSkeleton() {
+export function SpecialProductCardSkeleton() {
   return (
     <div className="flex flex-col overflow-hidden rounded-lg bg-gray-900 border border-gray-700 animate-pulse">
       <div className="aspect-square bg-gray-800" />
@@ -115,6 +117,7 @@ export function ProductCardSkeleton() {
         <div className="h-4 bg-gray-700 rounded w-3/4" />
         <div className="h-4 bg-gray-700 rounded w-1/2" />
         <div className="h-3 bg-gray-700 rounded w-1/3" />
+        <div className="h-3 bg-gray-700 rounded w-2/3" />
       </div>
       <div className="mx-3 mb-3 h-9 bg-gray-700 rounded-md" />
     </div>

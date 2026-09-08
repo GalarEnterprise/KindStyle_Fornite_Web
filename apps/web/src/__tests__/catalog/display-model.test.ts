@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { buildShopDisplayModel } from '@/lib/services/catalog/display-model'
+import {
+  buildShopDisplayModel,
+  filterSpecialProducts,
+  extractRegularItems,
+  buildSpecialSections,
+  SPECIAL_PRODUCT_TYPES,
+} from '@/lib/services/catalog/display-model'
 import type { Product, ShopItem } from '@prisma/client'
 
 type ShopItemWithProduct = ShopItem & { product: Product }
@@ -330,5 +336,181 @@ describe('buildShopDisplayModel section banners', () => {
     const otros = result.find((s) => s.title === 'Otros')
     expect(rambo?.banner).toBeUndefined()
     expect(otros?.banner?.image).toBe('https://fortnite-api.com/images/shop/orros-only.png')
+  })
+})
+
+describe('filterSpecialProducts', () => {
+  it('should filter items by special product types', () => {
+    const items = [
+      createMockShopItemWithProduct({ type: 'VBucks' }, { section: 'V-Bucks' }),
+      createMockShopItemWithProduct({ type: 'BATTLE_PASS' }, { section: 'Battle Pass' }),
+      createMockShopItemWithProduct({ type: 'CREW' }, { section: 'Crew' }),
+      createMockShopItemWithProduct({ type: 'OUTFIT' }, { section: 'Featured' }),
+    ]
+
+    const result = filterSpecialProducts(items)
+
+    expect(result).toHaveLength(3)
+    expect(result.every((item) => ['VBucks', 'BATTLE_PASS', 'CREW'].includes(item.product.type))).toBe(true)
+  })
+
+  it('should return empty array when no special products exist', () => {
+    const items = [
+      createMockShopItemWithProduct({ type: 'OUTFIT' }, { section: 'Featured' }),
+      createMockShopItemWithProduct({ type: 'EMOTE' }, { section: 'Daily' }),
+    ]
+
+    const result = filterSpecialProducts(items)
+
+    expect(result).toHaveLength(0)
+  })
+
+  it('should not mutate the original array', () => {
+    const items = [
+      createMockShopItemWithProduct({ type: 'VBucks' }, { section: 'V-Bucks' }),
+      createMockShopItemWithProduct({ type: 'OUTFIT' }, { section: 'Featured' }),
+    ]
+
+    const originalLength = items.length
+    filterSpecialProducts(items)
+
+    expect(items).toHaveLength(originalLength)
+  })
+})
+
+describe('extractRegularItems', () => {
+  it('should return only non-special items', () => {
+    const items = [
+      createMockShopItemWithProduct({ type: 'VBucks' }, { section: 'V-Bucks' }),
+      createMockShopItemWithProduct({ type: 'OUTFIT' }, { section: 'Featured' }),
+      createMockShopItemWithProduct({ type: 'EMOTE' }, { section: 'Daily' }),
+    ]
+
+    const result = extractRegularItems(items)
+
+    expect(result).toHaveLength(2)
+    expect(result.every((item) => !['VBucks', 'BATTLE_PASS', 'CREW'].includes(item.product.type))).toBe(true)
+  })
+
+  it('should return empty array when all items are special', () => {
+    const items = [
+      createMockShopItemWithProduct({ type: 'VBucks' }, { section: 'V-Bucks' }),
+      createMockShopItemWithProduct({ type: 'BATTLE_PASS' }, { section: 'Battle Pass' }),
+    ]
+
+    const result = extractRegularItems(items)
+
+    expect(result).toHaveLength(0)
+  })
+})
+
+describe('buildSpecialSections', () => {
+  it('should create sections for special product types in order', () => {
+    const items = [
+      createMockShopItemWithProduct({ type: 'VBucks', name: '1000 V-Bucks' }, { section: 'V-Bucks' }),
+      createMockShopItemWithProduct({ type: 'BATTLE_PASS', name: 'Season Pass' }, { section: 'Battle Pass' }),
+      createMockShopItemWithProduct({ type: 'CREW', name: 'Fortnite Crew' }, { section: 'Crew' }),
+    ]
+
+    const result = buildSpecialSections(items, [], new Set())
+
+    expect(result).toHaveLength(3)
+    expect(result[0].slug).toBe('vbucks')
+    expect(result[0].title).toBe('V-Bucks')
+    expect(result[0].order).toBe(0)
+    expect(result[1].slug).toBe('pase-de-batalla')
+    expect(result[1].title).toBe('Pase de Batalla')
+    expect(result[1].order).toBe(1)
+    expect(result[2].slug).toBe('fortnite-crew')
+    expect(result[2].title).toBe('Fortnite Crew')
+    expect(result[2].order).toBe(2)
+  })
+
+  it('should skip empty special sections', () => {
+    const items = [
+      createMockShopItemWithProduct({ type: 'VBucks', name: '1000 V-Bucks' }, { section: 'V-Bucks' }),
+    ]
+
+    const result = buildSpecialSections(items, [], new Set())
+
+    expect(result).toHaveLength(1)
+    expect(result[0].slug).toBe('vbucks')
+  })
+
+  it('should return empty array when no special items', () => {
+    const items: ShopItemWithProduct[] = []
+
+    const result = buildSpecialSections(items, [], new Set())
+
+    expect(result).toHaveLength(0)
+  })
+})
+
+describe('buildShopDisplayModel with special sections', () => {
+  it('should place special sections before regular sections', () => {
+    const items = [
+      createMockShopItemWithProduct({ type: 'VBucks', name: '1000 V-Bucks' }, { section: 'V-Bucks' }),
+      createMockShopItemWithProduct({ type: 'OUTFIT', name: 'Skin' }, { section: 'Featured' }),
+    ]
+
+    const result = buildShopDisplayModel(items)
+
+    expect(result).toHaveLength(2)
+    expect(result[0].slug).toBe('vbucks')
+    expect(result[1].title).toBe('Featured')
+  })
+
+  it('should handle mixed special and regular items correctly', () => {
+    const items = [
+      createMockShopItemWithProduct({ type: 'VBucks', name: '1000 V-Bucks' }, { section: 'V-Bucks' }),
+      createMockShopItemWithProduct({ type: 'BATTLE_PASS', name: 'Season Pass' }, { section: 'Battle Pass' }),
+      createMockShopItemWithProduct({ type: 'OUTFIT', name: 'Skin' }, { section: 'Featured' }),
+      createMockShopItemWithProduct({ type: 'EMOTE', name: 'Dance' }, { section: 'Daily' }),
+    ]
+
+    const result = buildShopDisplayModel(items)
+
+    expect(result).toHaveLength(4)
+    expect(result[0].slug).toBe('vbucks')
+    expect(result[1].slug).toBe('pase-de-batalla')
+    expect(result[2].title).toBe('Featured')
+    expect(result[3].title).toBe('Daily')
+  })
+
+  it('should omit empty special sections', () => {
+    const items = [
+      createMockShopItemWithProduct({ type: 'OUTFIT', name: 'Skin' }, { section: 'Featured' }),
+    ]
+
+    const result = buildShopDisplayModel(items)
+
+    expect(result).toHaveLength(1)
+    expect(result[0].title).toBe('Featured')
+  })
+
+  it('should handle only special items with no regular sections', () => {
+    const items = [
+      createMockShopItemWithProduct({ type: 'VBucks', name: '1000 V-Bucks' }, { section: 'V-Bucks' }),
+      createMockShopItemWithProduct({ type: 'CREW', name: 'Fortnite Crew' }, { section: 'Crew' }),
+    ]
+
+    const result = buildShopDisplayModel(items)
+
+    expect(result).toHaveLength(2)
+    expect(result[0].slug).toBe('vbucks')
+    expect(result[1].slug).toBe('fortnite-crew')
+  })
+
+  it('should preserve order of regular sections from API', () => {
+    const items = [
+      createMockShopItemWithProduct({ type: 'OUTFIT', name: 'Skin 1' }, { section: 'Daily' }),
+      createMockShopItemWithProduct({ type: 'OUTFIT', name: 'Skin 2' }, { section: 'Featured' }),
+    ]
+
+    const result = buildShopDisplayModel(items)
+
+    expect(result).toHaveLength(2)
+    expect(result[0].title).toBe('Daily')
+    expect(result[1].title).toBe('Featured')
   })
 })

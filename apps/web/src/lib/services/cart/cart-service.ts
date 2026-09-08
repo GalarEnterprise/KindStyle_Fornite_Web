@@ -37,6 +37,7 @@ export interface CartItemWithProduct {
   quantity: number
   type: CartItemType
   createdAt: Date
+  accountAccess: { platform: string; email: string } | null
   bundleOfferId: string | null
   bundleName: string | null
   bundlePriceVbucks: number | null
@@ -190,6 +191,16 @@ export async function getCart(userId: string): Promise<CartItemWithProduct[]> {
 
   const result: CartItemWithProduct[] = []
   for (const item of items) {
+    let accountAccess: { platform: string; email: string } | null = null
+    if (item.type === 'ACCOUNT_ACCESS' && item.account_access) {
+      try {
+        const decrypted = JSON.parse(item.account_access as string)
+        accountAccess = { platform: decrypted.platform, email: decrypted.email }
+      } catch {
+        accountAccess = null
+      }
+    }
+
     if (item.type === 'BUNDLE') {
       result.push({
         id: item.id,
@@ -197,6 +208,7 @@ export async function getCart(userId: string): Promise<CartItemWithProduct[]> {
         quantity: 1,
         type: item.type,
         createdAt: item.created_at,
+        accountAccess: null,
         bundleOfferId: item.bundle_offer_id,
         bundleName: item.bundle_name,
         bundlePriceVbucks: item.bundle_price_vbucks,
@@ -215,6 +227,7 @@ export async function getCart(userId: string): Promise<CartItemWithProduct[]> {
       quantity: 1,
       type: item.type,
       createdAt: item.created_at,
+      accountAccess,
       bundleOfferId: null,
       bundleName: null,
       bundlePriceVbucks: null,
@@ -257,6 +270,52 @@ export async function addItem(userId: string, input: AddToCartInput) {
     }
   }
 
+  const isAccountAccess = input.type === 'ACCOUNT_ACCESS'
+
+  if (isAccountAccess) {
+    if (!input.accountAccess) {
+      return {
+        success: false as const,
+        error: { code: 'VALIDATION_ERROR', message: 'accountAccess es requerido para tipo ACCOUNT_ACCESS' },
+      }
+    }
+
+    const existing = await db.cartItem.findUnique({
+      where: { user_id_product_id: { user_id: userId, product_id: input.productId } },
+    })
+
+    if (existing) {
+      return {
+        success: false as const,
+        error: { code: 'ITEM_ALREADY_IN_CART', message: 'Ese artículo ya está en tu carrito' },
+      }
+    }
+
+    const existingAccountAccess = await db.cartItem.findFirst({
+      where: { user_id: userId, type: 'ACCOUNT_ACCESS' },
+    })
+
+    if (existingAccountAccess) {
+      return {
+        success: false as const,
+        error: { code: 'CART_TYPE_CONFLICT', message: 'Ya tienes un producto de acceso a cuenta en tu carrito' },
+      }
+    }
+
+    const data: Prisma.CartItemUncheckedCreateInput = {
+      user_id: userId,
+      product_id: input.productId,
+      quantity: 1,
+      type: 'ACCOUNT_ACCESS',
+      account_access: encryptCredentials(
+        JSON.stringify(input.accountAccess)
+      ) as unknown as Prisma.InputJsonValue,
+    }
+
+    const created = await db.cartItem.create({ data })
+    return { success: true as const, data: { id: created.id, quantity: created.quantity } }
+  }
+
   if (product.giftable === 'NOT_GIFTABLE') {
     return {
       success: false as const,
@@ -268,6 +327,17 @@ export async function addItem(userId: string, input: AddToCartInput) {
     return {
       success: false as const,
       error: { code: 'CREDENTIALS_REQUIRED', message: 'Este producto requiere tus credenciales de Epic' },
+    }
+  }
+
+  const existingAccountAccessItem = await db.cartItem.findFirst({
+    where: { user_id: userId, type: 'ACCOUNT_ACCESS' },
+  })
+
+  if (existingAccountAccessItem) {
+    return {
+      success: false as const,
+      error: { code: 'CART_TYPE_CONFLICT', message: 'No puedes mezclar productos de gifting con productos de acceso a cuenta' },
     }
   }
 

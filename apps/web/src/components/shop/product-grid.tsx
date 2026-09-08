@@ -9,6 +9,7 @@ interface ProductData {
   iconUrl: string | null
   rarity: string | null
   type: string
+  giftable: string
   visible: boolean
 }
 
@@ -31,6 +32,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
           iconUrl={product.iconUrl}
           rarity={product.rarity}
           type={product.type}
+          giftable={product.giftable}
           visible={product.visible}
           onAddToCart={() => onAddToCart?.(product.id)}
         />

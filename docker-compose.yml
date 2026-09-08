@@ -82,7 +82,14 @@ services:
     environment:
       - DATABASE_URL=postgresql://kindstyle:kindstyle_dev@postgres:5432/kindstyle_dev
       - REDIS_URL=redis://redis:6379
-      - FORTNITE_API_KEY=${FORTNITE_API_KEY:-your_fortnite_api_key}
+      - FORTNITE_API_KEY=${FORTNITE_API_KEY:-}
+      - LEGACY_FORTNITE_API_KEY=${LEGACY_FORTNITE_API_KEY:-}
+      - FORTNITE_API_URL=${FORTNITE_API_URL:-https://fortnite-api.com}
+      - LEGACY_FORNITE_URL=${LEGACY_FORNITE_URL:-https://fortnite-api.com}
+      - API_FORTNITE_API_KEY=${API_FORTNITE_API_KEY:-}
+      - API_FORNITE_URL=${API_FORNITE_URL:-https://prod.api-fortnite.com/api}
+      - CATALOG_PROVIDER=${CATALOG_PROVIDER:-legacy}
+      - CATALOG_SHADOW=${CATALOG_SHADOW:-false}
       - RESEND_API_KEY=${RESEND_API_KEY:-re_your_resend_api_key}
       - EMAIL_FROM=${EMAIL_FROM:-noreply@kindstyle.com}
       - ENCRYPTION_KEY=${ENCRYPTION_KEY:-your-32-char-encryption-key-here}
@@ -101,6 +108,8 @@ services:
       context: .
       dockerfile: Dockerfile
       target: builder
+    working_dir: /app/packages/database
+    command: npx prisma migrate deploy
     restart: "no"
     environment:
       - DATABASE_URL=postgresql://kindstyle:kindstyle_dev@postgres:5432/kindstyle_dev

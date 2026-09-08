@@ -7,6 +7,25 @@ import {
 
 type ShopItemWithProduct = ShopItem & { product: Product }
 
+export type SpecialProductType = 'VBucks' | 'BATTLE_PASS' | 'CREW'
+
+export type SpecialSectionConfig = {
+  type: SpecialProductType
+  title: string
+  slug: string
+  order: number
+}
+
+export const SPECIAL_PRODUCT_TYPES: SpecialSectionConfig[] = [
+  { type: 'VBucks', title: 'V-Bucks', slug: 'vbucks', order: 0 },
+  { type: 'BATTLE_PASS', title: 'Pase de Batalla', slug: 'pase-de-batalla', order: 1 },
+  { type: 'CREW', title: 'Fortnite Crew', slug: 'fortnite-crew', order: 2 },
+]
+
+const SPECIAL_TYPE_SET = new Set<SpecialProductType>(
+  SPECIAL_PRODUCT_TYPES.map((c) => c.type)
+)
+
 export type ShopSection = {
   id: string
   title: string
@@ -237,30 +256,86 @@ function dedupeShopItems(items: ShopItemWithProduct[]): ShopItemWithProduct[] {
   return deduped
 }
 
+export function filterSpecialProducts(
+  items: ShopItemWithProduct[],
+  types: readonly SpecialProductType[] = SPECIAL_PRODUCT_TYPES.map((c) => c.type)
+): ShopItemWithProduct[] {
+  const typeSet = new Set(types)
+  return items.filter((item) => typeSet.has(item.product.type as SpecialProductType))
+}
+
+export function extractRegularItems(
+  items: ShopItemWithProduct[]
+): ShopItemWithProduct[] {
+  return items.filter((item) => !SPECIAL_TYPE_SET.has(item.product.type as SpecialProductType))
+}
+
+export function buildSpecialSections(
+  filteredItems: ShopItemWithProduct[],
+  referenceBanners: BannerReference[],
+  takenBannerIds: Set<string>
+): ShopDisplaySection[] {
+  const sections: ShopDisplaySection[] = []
+
+  for (const config of SPECIAL_PRODUCT_TYPES) {
+    const typeItems = filteredItems.filter(
+      (item) => item.product.type === config.type
+    )
+    if (typeItems.length === 0) continue
+
+    const entries = typeItems.map((item) => createDisplayEntry(item))
+    const banner = resolveSectionBanner(
+      typeItems,
+      null,
+      config.slug,
+      referenceBanners,
+      takenBannerIds
+    )
+
+    sections.push({
+      id: config.slug,
+      title: config.title,
+      slug: config.slug,
+      order: config.order,
+      layoutId: null,
+      entries,
+      banner,
+    })
+  }
+
+  return sections
+}
+
 export function buildShopDisplayModel(
   rawItems: ShopItemWithProduct[],
   referenceBanners: BannerReference[] = []
 ): ShopDisplaySection[] {
   const items = dedupeShopItems(rawItems)
-  const sections = extractSections(items)
-  const sectionsWithEntries: ShopDisplaySection[] = []
   const takenBannerIds = new Set<string>()
 
+  const specialItems = filterSpecialProducts(items)
+  const regularItems = extractRegularItems(items)
+
+  const specialSections = buildSpecialSections(specialItems, referenceBanners, takenBannerIds)
+
+  const sections = extractSections(regularItems)
+  const regularSections: ShopDisplaySection[] = []
+
   for (const section of sections) {
-    const sectionItems = items.filter((item) => item.section === section.title)
+    const sectionItems = regularItems.filter((item) => item.section === section.title)
     if (sectionItems.length === 0) continue
 
     const entries = groupBundlesByOfferId(sectionItems, section.title)
     const banner = resolveSectionBanner(sectionItems, section.layoutId, section.slug, referenceBanners, takenBannerIds)
 
-    sectionsWithEntries.push({
+    regularSections.push({
       ...section,
       entries,
       banner,
     })
   }
 
-  const itemsWithoutSection = items.filter((item) => !item.section)
+  const itemsWithoutSection = regularItems.filter((item) => !item.section)
   if (itemsWithoutSection.length > 0) {
     const entries = itemsWithoutSection.map((item) => createDisplayEntry(item))
     const otherBanner = resolveSectionBanner(
@@ -270,7 +345,7 @@ export function buildShopDisplayModel(
       referenceBanners,
       takenBannerIds
     )
-    sectionsWithEntries.push({
+    regularSections.push({
       id: 'other',
       title: 'Otros',
       slug: 'otros',
@@ -281,5 +356,5 @@ export function buildShopDisplayModel(
     })
   }
 
-  return sectionsWithEntries
+  return [...specialSections, ...regularSections]
 }

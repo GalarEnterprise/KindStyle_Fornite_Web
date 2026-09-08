@@ -35,14 +35,17 @@ export async function POST(request: NextRequest) {
     // Check cooldown
     const cooldown = await checkCooldown(email, 'PASSWORD_RESET')
     if (!cooldown.allowed) {
-      return {
-        success: false,
-        error: {
-          code: 'COOLDOWN',
-          message: `Debes esperar ${cooldown.cooldownRemaining} segundos antes de solicitar otro código`,
-          cooldownRemaining: cooldown.cooldownRemaining,
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: 'COOLDOWN',
+            message: `Debes esperar ${cooldown.cooldownRemaining} segundos antes de solicitar otro código`,
+            cooldownRemaining: cooldown.cooldownRemaining,
+          },
         },
-      }
+        { status: 429 }
+      )
     }
 
     // Create new code

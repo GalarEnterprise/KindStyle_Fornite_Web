@@ -9,6 +9,7 @@ interface CollectionProduct {
   iconUrl: string | null
   rarity: string | null
   type: string
+  giftable: string
   visible: boolean
 }
 

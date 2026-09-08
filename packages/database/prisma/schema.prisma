@@ -140,6 +140,7 @@ enum ProductType {
   BATTLE_PASS
   CREW
   BUNDLE
+  VEHICLE
   OTHER
 }
 
@@ -273,6 +274,7 @@ model FortniteBannerColor {
 
 enum CartItemType {
   GIFT
+  ACCOUNT_ACCESS
   VBucks
   CREW
   BATTLE_PASS
@@ -286,6 +288,7 @@ model CartItem {
   quantity              Int         @default(1)
   type                  CartItemType
   encrypted_credentials Json?
+  account_access        Json?
   bundle_offer_id       String?
   bundle_name           String?
   bundle_price_vbucks   Int?

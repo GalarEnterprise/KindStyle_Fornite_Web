@@ -1,15 +1,26 @@
 import { getLatestSnapshot } from '@/lib/services/catalog/snapshot-service'
-import { buildShopDisplayModel } from '@/lib/services/catalog/display-model'
+import { buildShopDisplayModel, SPECIAL_PRODUCT_TYPES } from '@/lib/services/catalog/display-model'
+import type { SpecialProductType } from '@/lib/services/catalog/display-model'
 import { getBannerReferences } from '@/lib/services/catalog/banner-reference-service'
 import { SectionSidebar } from '@/components/shop/section-sidebar'
 import { SectionHeader } from '@/components/shop/section-header'
+import { SpecialSectionHeader } from '@/components/shop/special-section-header'
 import { BundleCard } from '@/components/shop/bundle-card'
 import { ProductCard } from '@/components/shop/product-card'
+import { SpecialProductCard } from '@/components/shop/special-product-card'
 import { LastUpdateBadge } from '@/components/shop/last-update-badge'
 import { ProductGridSkeleton } from '@/components/shop/product-grid'
 import { PostLoginHandler } from '@/components/shop/post-login-handler'
 
 export const dynamic = 'force-dynamic'
+
+const SPECIAL_SLUG_SET = new Set<string>(
+  SPECIAL_PRODUCT_TYPES.map((c) => c.slug)
+)
+
+function getSpecialTypeFromSlug(slug: string): SpecialProductType | undefined {
+  return SPECIAL_PRODUCT_TYPES.find((c) => c.slug === slug)?.type
+}
 
 export default async function ShopPage() {
   const snapshot = await getLatestSnapshot()
@@ -73,52 +84,86 @@ export default async function ShopPage() {
                 <p className="text-gray-400 text-lg">No hay productos disponibles en la tienda de hoy.</p>
               </div>
             ) : (
-              displaySections.map((section, index) => (
-                <section
-                  key={section.id}
-                  id={`section-${section.slug}`}
-                  className="mb-8 shop-section"
-                >
-                  <SectionHeader
-                    title={section.title}
-                    entryCount={section.entries.length}
-                    banner={section.banner}
-                    priority={index === 0}
-                  />
+              displaySections.map((section, index) => {
+                const isSpecial = SPECIAL_SLUG_SET.has(section.slug)
+                const specialType = isSpecial ? getSpecialTypeFromSlug(section.slug) : undefined
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                    {section.entries.map((entry) => {
-                      if (entry.type === 'bundle') {
+                return (
+                  <section
+                    key={section.id}
+                    id={`section-${section.slug}`}
+                    className="mb-8 shop-section"
+                  >
+                    {isSpecial && specialType ? (
+                      <SpecialSectionHeader
+                        title={section.title}
+                        entryCount={section.entries.length}
+                        specialType={specialType}
+                        banner={section.banner}
+                        priority={index === 0}
+                      />
+                    ) : (
+                      <SectionHeader
+                        title={section.title}
+                        entryCount={section.entries.length}
+                        banner={section.banner}
+                        priority={index === 0}
+                      />
+                    )}
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                      {section.entries.map((entry) => {
+                        if (entry.type === 'bundle') {
+                          return (
+                            <BundleCard
+                              key={entry.id}
+                              offerId={entry.offerId}
+                              name={entry.name}
+                              imageUrl={entry.imageUrl}
+                              priceVbucks={entry.priceVbucks}
+                              components={entry.components}
+                            />
+                          )
+                        }
+
+                        if (isSpecial && specialType) {
+                          return (
+                            <SpecialProductCard
+                              key={entry.id}
+                              productId={entry.product.id}
+                              name={entry.product.name}
+                              priceVbucks={Number(entry.product.price_vbucks)}
+                              priceMxn={Number(entry.product.price_vbucks) * (vbucksRate / 100)}
+                              imageUrl={entry.product.image_url}
+                              iconUrl={entry.product.icon_url}
+                              type={entry.product.type}
+                              giftable={entry.product.giftable}
+                              visible={entry.product.visible}
+                              specialType={specialType}
+                            />
+                          )
+                        }
+
                         return (
-                          <BundleCard
+                          <ProductCard
                             key={entry.id}
-                            offerId={entry.offerId}
-                            name={entry.name}
-                            imageUrl={entry.imageUrl}
-                            priceVbucks={entry.priceVbucks}
-                            components={entry.components}
+                            productId={entry.product.id}
+                            name={entry.product.name}
+                            priceVbucks={entry.product.price_vbucks}
+                            priceMxn={Number(entry.product.price_vbucks) * (vbucksRate / 100)}
+                            imageUrl={entry.product.image_url}
+                            iconUrl={entry.product.icon_url}
+                            rarity={entry.product.rarity}
+                            type={entry.product.type}
+                            giftable={entry.product.giftable}
+                            visible={entry.product.visible}
                           />
                         )
-                      }
-
-                      return (
-                        <ProductCard
-                          key={entry.id}
-                          productId={entry.product.id}
-                          name={entry.product.name}
-                          priceVbucks={entry.product.price_vbucks}
-                          priceMxn={Number(entry.product.price_vbucks) * (vbucksRate / 100)}
-                          imageUrl={entry.product.image_url}
-                          iconUrl={entry.product.icon_url}
-                          rarity={entry.product.rarity}
-                          type={entry.product.type}
-                          visible={entry.product.visible}
-                        />
-                      )
-                    })}
-                  </div>
-                </section>
-              ))
+                      })}
+                    </div>
+                  </section>
+                )
+              })
             )}
           </div>
         </div>

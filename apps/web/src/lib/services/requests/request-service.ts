@@ -99,8 +99,21 @@ export async function createRequestFromCart(userId: string, paymentMethod: 'TRAN
   })
   const productsById = new Map(products.map((product) => [product.id, product]))
 
+  const hasAccountAccess = cartItems.some((item) => item.type === 'ACCOUNT_ACCESS')
+  const hasGiftItems = cartItems.some((item) => item.type === 'GIFT')
+
+  if (hasAccountAccess && hasGiftItems) {
+    return {
+      success: false as const,
+      error: {
+        code: 'MIXED_CART',
+        message: 'No puedes mezclar productos regalables con acceso de cuenta en el mismo carrito',
+      },
+    }
+  }
+
   for (const item of cartItems) {
-    if (item.type === 'BUNDLE') continue
+    if (item.type === 'BUNDLE' || item.type === 'ACCOUNT_ACCESS') continue
 
     const product = productsById.get(item.product_id ?? '')
     if (!product || !product.active || !product.visible) {
@@ -122,6 +135,10 @@ export async function createRequestFromCart(userId: string, paymentMethod: 'TRAN
       const totalVbucks = cartItems.reduce((acc, item) => {
         if (item.type === 'BUNDLE') {
           return acc + (item.bundle_price_vbucks ?? 0) * item.quantity
+        }
+        if (item.type === 'ACCOUNT_ACCESS') {
+          const product = productsById.get(item.product_id ?? '')
+          return acc + (product?.price_vbucks ?? 0) * item.quantity
         }
         const product = productsById.get(item.product_id ?? '')
         return acc + (product?.price_vbucks ?? 0) * item.quantity
@@ -171,6 +188,7 @@ export async function createRequestFromCart(userId: string, paymentMethod: 'TRAN
           fortnite_offer_id: product.fortnite_offer_id ?? undefined,
           price_vbucks_snapshot: product.price_vbucks,
           quantity: item.quantity,
+          fulfillment_type: item.type === 'ACCOUNT_ACCESS' ? 'account_access' : undefined,
         })
       }
 
@@ -191,10 +209,12 @@ export async function createRequestFromCart(userId: string, paymentMethod: 'TRAN
       }
     }
 
-    try {
-      await createPayment(userId, result.id, paymentMethod)
-    } catch (error) {
-      console.error('[request-service.createRequestFromCart] Error creating payment:', error)
+    if (!hasAccountAccess) {
+      try {
+        await createPayment(userId, result.id, paymentMethod)
+      } catch (error) {
+        console.error('[request-service.createRequestFromCart] Error creating payment:', error)
+      }
     }
 
     try {

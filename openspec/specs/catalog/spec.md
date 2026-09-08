@@ -96,6 +96,7 @@ Los productos DEBEN organizarse por colecciones como en la tienda de Fortnite.
 - Las secciones de la API DEBEN mapearse a nombres en español
 - Productos sin sección DEBEN agruparse por tipo de producto
 - Cada colección DEBE tener un `display_order` para ordenamiento
+- Los productos de tipos `VBucks`, `BATTLE_PASS` y `CREW` DEBEN agruparse en secciones dedicadas independientes, separadas de las secciones de cosméticos regulares
 
 ### REQ-CAT-010: ProductCard visual
 
@@ -110,6 +111,7 @@ La tarjeta de producto DEBE mostrar únicamente:
 - NO DEBE mostrar textos adicionales
 - NO DEBE mostrar descripciones largas
 - DEBE ser responsive (2-5 columnas según viewport)
+- Los productos especiales DEBEN usar un componente de tarjeta diferenciado (`SpecialProductCard`) con layout propio
 
 ### REQ-CAT-011: Badge de última actualización
 
@@ -325,6 +327,122 @@ Si un entry NO tiene `bundle`, se muestra como item individual.
 
 - No romper la tienda si `bundle` es undefined
 - Products sin bundle → ProductCard normal
+
+## Secciones de Productos Especiales
+
+### REQ-SPC-001: Sección dedicada de V-Bucks
+
+El sistema DEBE crear una sección dedicada para productos de tipo `VBucks`.
+
+- La sección DEBE mostrarse con título "V-Bucks" y un slug `vbucks`
+- La sección DEBE incluir un aviso: "Requiere cuenta de Epic Games"
+- La sección DEBE mostrarse antes de las secciones de cosméticos regulares
+- Si no hay productos `VBucks` en el snapshot actual, la sección NO DEBE renderizarse
+- El `display_order` de la sección DEBE ser fijo y conocido (no depende del orden de la API)
+
+#### Scenario: V-Bucks disponibles en el shop
+
+- **WHEN** el snapshot contiene al menos un producto de tipo `VBucks`
+- **THEN** se renderiza una sección "V-Bucks" con tarjetas de productos especiales
+- **AND** la sección aparece antes de las secciones de cosméticos
+
+#### Scenario: Sin V-Bucks en el shop
+
+- **WHEN** el snapshot no contiene productos de tipo `VBucks`
+- **THEN** la sección "V-Bucks" no se renderiza
+- **AND** no se muestra un contenedor vacío
+
+### REQ-SPC-002: Sección dedicada de Battle Pass
+
+El sistema DEBE crear una sección dedicada para productos de tipo `BATTLE_PASS`.
+
+- La sección DEBE mostrarse con título "Pase de Batalla" y un slug `pase-de-batalla`
+- La sección DEBE incluir un aviso: "Requiere cuenta de Epic Games"
+- La sección DEBE mostrarse después de V-Bucks y antes de las secciones de cosméticos
+- Si no hay productos `BATTLE_PASS` en el snapshot actual, la sección NO DEBE renderizarse
+
+#### Scenario: Battle Pass disponible en el shop
+
+- **WHEN** el snapshot contiene al menos un producto de tipo `BATTLE_PASS`
+- **THEN** se renderiza una sección "Pase de Batalla" con tarjetas de productos especiales
+- **AND** la sección aparece después de V-Bucks y antes de cosméticos
+
+#### Scenario: Sin Battle Pass en el shop
+
+- **WHEN** el snapshot no contiene productos de tipo `BATTLE_PASS`
+- **THEN** la sección "Pase de Batalla" no se renderiza
+
+### REQ-SPC-003: Sección dedicada de Crew
+
+El sistema DEBE crear una sección dedicada para productos de tipo `CREW`.
+
+- La sección DEBE mostrarse con título "Fortnite Crew" y un slug `fortnite-crew`
+- La sección DEBE incluir un aviso: "Requiere cuenta de Epic Games"
+- La sección DEBE mostrarse después de Battle Pass y antes de las secciones de cosméticos
+- Si no hay productos `CREW` en el snapshot actual, la sección NO DEBE renderizarse
+
+#### Scenario: Crew disponible en el shop
+
+- **WHEN** el snapshot contiene al menos un producto de tipo `CREW`
+- **THEN** se renderiza una sección "Fortnite Crew" con tarjetas de productos especiales
+- **AND** la sección aparece después de Battle Pass y antes de cosméticos
+
+#### Scenario: Sin Crew en el shop
+
+- **WHEN** el snapshot no contiene productos de tipo `CREW`
+- **THEN** la sección "Fortnite Crew" no se renderiza
+
+### REQ-SPC-004: Tarjeta de producto especial
+
+Los productos especiales DEBEN usar un componente `SpecialProductCard` diferenciado del `ProductCard` regular.
+
+- La tarjeta DEBE mostrar: nombre del producto, valor en V-Bucks, valor en moneda de pago, imagen/icono
+- La tarjeta DEBE incluir un badge distintivo por tipo (ej: "V-Bucks", "Pase", "Crew")
+- La tarjeta DEBE incluir un aviso en texto pequeño: "Requiere credenciales de Epic Games"
+- La tarjeta DEBE usar el botón existente de agregar al carrito (que ya maneja el modal de credenciales)
+- La tarjeta DEBE ser responsive (2-5 columnas según viewport, consistente con `ProductCard`)
+- NO DEBE mostrar descripciones largas ni textos adicionales
+
+#### Scenario: Renderizado de SpecialProductCard
+
+- **WHEN** se renderiza un producto de tipo `VBucks` en su sección dedicada
+- **THEN** la tarjeta muestra badge "V-Bucks", imagen, precio y aviso de credenciales
+- **AND** el botón de agregar al carrito abre el modal de credenciales existente
+
+### REQ-SPC-005: Orden de secciones especiales
+
+Las secciones especiales DEBEN mostrarse en un orden fijo antes de las secciones de cosméticos.
+
+- Orden: V-Bucks → Battle Pass → Crew → Secciones de la API (cosméticos)
+- Si una sección está vacía (sin productos), DEBE omitirse sin alterar el orden de las demás
+- Las secciones de cosméticos DEBEN conservar su orden original de la API
+
+#### Scenario: Todas las secciones especiales vacías
+
+- **WHEN** no hay productos de tipos `VBucks`, `BATTLE_PASS` ni `CREW`
+- **THEN** solo se muestran las secciones de cosméticos regulares
+- **AND** no se muestra ningún espacio vacío ni placeholder
+
+#### Scenario: Solo V-Bucks disponible
+
+- **WHEN** solo hay productos de tipo `VBucks`
+- **THEN** se muestra la sección "V-Bucks" seguida de las secciones de cosméticos
+- **AND** no se muestran secciones vacías de Battle Pass ni Crew
+
+### REQ-SPC-006: Navegación lateral con secciones especiales
+
+La sidebar de navegación DEBE incluir enlaces a las secciones especiales.
+
+- Cada sección especial DEBE tener un enlace en la sidebar con el mismo formato que las secciones regulares
+- Los enlaces DEBEN apuntar a `#section-{slug}` (ej: `#section-vbucks`)
+- Las secciones especiales DEBEN aparecer al inicio de la lista de navegación
+- El scroll-spy DEBE funcionar correctamente con las nuevas secciones
+
+#### Scenario: Sidebar incluye secciones especiales
+
+- **WHEN** la página del shop se renderiza con secciones especiales
+- **THEN** la sidebar muestra enlaces para V-Bucks, Battle Pass y Crew (si tienen productos)
+- **AND** el scroll-spy resalta la sección activa al hacer scroll
 
 ## Sección Banners — Datos de Referencia
 ### Requirement: Sincronización de banners de referencia
