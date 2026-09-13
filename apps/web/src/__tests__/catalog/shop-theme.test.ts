@@ -66,6 +66,7 @@ describe('extractEntryTheme', () => {
     const entry: ShopThemeSourceEntry = {
       colors: {
         color1: 'f86b71ff',
+        color2: '012743ff',
         color3: 'ffa9a5ff',
         textBackgroundColor: '784042ff',
       },
@@ -76,6 +77,7 @@ describe('extractEntryTheme', () => {
 
     expect(extractEntryTheme(entry)).toEqual({
       color1: '#f86b71ff',
+      color2: '#012743ff',
       color3: '#ffa9a5ff',
       textBackgroundColor: '#784042ff',
       tileImage: 'https://fortnite-api.com/images/shop/a.png',

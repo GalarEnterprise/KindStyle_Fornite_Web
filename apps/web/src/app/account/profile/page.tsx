@@ -198,38 +198,38 @@ export default function ProfilePage() {
   if (isLoading) {
     return (
       <div className="animate-pulse space-y-4">
-        <div className="h-8 w-48 rounded bg-gray-800" />
-        <div className="h-4 w-64 rounded bg-gray-800" />
-        <div className="mt-6 h-40 rounded-lg bg-gray-800" />
+        <div className="h-8 w-48 rounded bg-purple-800" />
+        <div className="h-4 w-64 rounded bg-purple-800" />
+        <div className="mt-6 h-40 rounded-lg bg-purple-800" />
       </div>
     )
   }
 
   if (!userData) {
     return (
-      <p className="text-gray-400">Error al cargar los datos del usuario.</p>
+      <p className="text-purple-300">Error al cargar los datos del usuario.</p>
     )
   }
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-white">Mi Perfil</h1>
-      <p className="mt-1 text-sm text-gray-400">
+      <p className="mt-1 text-sm text-purple-300">
         Gestiona tu información personal y configuración de cuenta.
       </p>
 
       {/* Personal Info */}
-      <div className="mt-6 rounded-lg border border-gray-800 bg-gray-900 p-6">
+      <div className="mt-6 rounded-lg border border-purple-800 bg-purple-900 p-6">
         <h2 className="text-lg font-semibold text-white">Información Personal</h2>
 
         <div className="mt-4 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-400">Email</label>
+            <label className="block text-sm font-medium text-purple-300">Email</label>
             <p className="mt-1 text-white">{userData.email}</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-400">Apodo</label>
+            <label className="block text-sm font-medium text-purple-300">Apodo</label>
             {isEditing ? (
               <div className="mt-1 flex gap-2">
                 <input
@@ -239,7 +239,7 @@ export default function ProfilePage() {
                     setNickname(e.target.value)
                     setError(null)
                   }}
-                  className="flex-1 rounded-md border border-gray-700 bg-gray-800 px-3 py-2 text-white focus:border-purple-500 focus:outline-none"
+                  className="flex-1 rounded-md border border-purple-700 bg-purple-900 px-3 py-2 text-white focus:border-purple-500 focus:outline-none"
                   placeholder="Tu apodo"
                 />
                 <button
@@ -255,7 +255,7 @@ export default function ProfilePage() {
                     setNickname(userData.nickname || '')
                     setError(null)
                   }}
-                  className="rounded-md border border-gray-700 px-4 py-2 text-sm font-medium text-gray-300 transition hover:bg-gray-800"
+                  className="rounded-md border border-purple-700 px-4 py-2 text-sm font-medium text-purple-200 transition hover:bg-purple-800"
                 >
                   Cancelar
                 </button>
@@ -276,12 +276,12 @@ export default function ProfilePage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-400">Rol</label>
+            <label className="block text-sm font-medium text-purple-300">Rol</label>
             <p className="mt-1 text-white">{getRoleLabel(userData.role)}</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-400">
+            <label className="block text-sm font-medium text-purple-300">
               Miembro desde
             </label>
             <p className="mt-1 text-white">
@@ -296,12 +296,12 @@ export default function ProfilePage() {
       </div>
 
       {/* Password Management */}
-      <div className="mt-6 rounded-lg border border-gray-800 bg-gray-900 p-6">
+      <div className="mt-6 rounded-lg border border-purple-800 bg-purple-900 p-6">
         <h2 className="text-lg font-semibold text-white">Contraseña</h2>
 
         {passwordMode === 'none' && (
           <div className="mt-4">
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-purple-300">
               {userData.hasPassword
                 ? 'Tienes una contraseña configurada.'
                 : 'Aún no tienes contraseña configurada.'}
@@ -318,7 +318,7 @@ export default function ProfilePage() {
         {passwordMode === 'create' && (
           <form onSubmit={handleCreatePassword} className="mt-4 space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-300">
+              <label className="mb-1 block text-sm font-medium text-purple-200">
                 Nueva contraseña
               </label>
               <input
@@ -328,12 +328,12 @@ export default function ProfilePage() {
                   setNewPassword(e.target.value)
                   setPasswordError(null)
                 }}
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none"
+                className="w-full rounded-lg border border-purple-700 bg-purple-900 px-3 py-2.5 text-sm text-white placeholder-purple-400/60 focus:border-purple-500 focus:outline-none"
                 placeholder="Mínimo 8 caracteres"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-300">
+              <label className="mb-1 block text-sm font-medium text-purple-200">
                 Confirmar contraseña
               </label>
               <input
@@ -343,7 +343,7 @@ export default function ProfilePage() {
                   setConfirmPassword(e.target.value)
                   setPasswordError(null)
                 }}
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none"
+                className="w-full rounded-lg border border-purple-700 bg-purple-900 px-3 py-2.5 text-sm text-white placeholder-purple-400/60 focus:border-purple-500 focus:outline-none"
                 placeholder="Repite la contraseña"
               />
             </div>
@@ -366,7 +366,7 @@ export default function ProfilePage() {
                   setNewPassword('')
                   setConfirmPassword('')
                 }}
-                className="rounded-md border border-gray-700 px-4 py-2 text-sm font-medium text-gray-300 transition hover:bg-gray-800"
+                className="rounded-md border border-purple-700 px-4 py-2 text-sm font-medium text-purple-200 transition hover:bg-purple-800"
               >
                 Cancelar
               </button>
@@ -377,7 +377,7 @@ export default function ProfilePage() {
         {passwordMode === 'change' && (
           <form onSubmit={handleChangePassword} className="mt-4 space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-300">
+              <label className="mb-1 block text-sm font-medium text-purple-200">
                 Contraseña actual
               </label>
               <input
@@ -387,12 +387,12 @@ export default function ProfilePage() {
                   setCurrentPassword(e.target.value)
                   setPasswordError(null)
                 }}
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none"
+                className="w-full rounded-lg border border-purple-700 bg-purple-900 px-3 py-2.5 text-sm text-white placeholder-purple-400/60 focus:border-purple-500 focus:outline-none"
                 placeholder="Tu contraseña actual"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-300">
+              <label className="mb-1 block text-sm font-medium text-purple-200">
                 Nueva contraseña
               </label>
               <input
@@ -402,12 +402,12 @@ export default function ProfilePage() {
                   setNewPassword(e.target.value)
                   setPasswordError(null)
                 }}
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none"
+                className="w-full rounded-lg border border-purple-700 bg-purple-900 px-3 py-2.5 text-sm text-white placeholder-purple-400/60 focus:border-purple-500 focus:outline-none"
                 placeholder="Mínimo 8 caracteres"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-300">
+              <label className="mb-1 block text-sm font-medium text-purple-200">
                 Confirmar nueva contraseña
               </label>
               <input
@@ -417,7 +417,7 @@ export default function ProfilePage() {
                   setConfirmPassword(e.target.value)
                   setPasswordError(null)
                 }}
-                className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2.5 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none"
+                className="w-full rounded-lg border border-purple-700 bg-purple-900 px-3 py-2.5 text-sm text-white placeholder-purple-400/60 focus:border-purple-500 focus:outline-none"
                 placeholder="Repite la nueva contraseña"
               />
             </div>
@@ -445,7 +445,7 @@ export default function ProfilePage() {
                   setNewPassword('')
                   setConfirmPassword('')
                 }}
-                className="rounded-md border border-gray-700 px-4 py-2 text-sm font-medium text-gray-300 transition hover:bg-gray-800"
+                className="rounded-md border border-purple-700 px-4 py-2 text-sm font-medium text-purple-200 transition hover:bg-purple-800"
               >
                 Cancelar
               </button>

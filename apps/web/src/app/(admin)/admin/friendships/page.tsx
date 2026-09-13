@@ -55,26 +55,26 @@ export default function AdminFriendshipsPage() {
       <AdminPageHeader title="Solicitudes de Amistad" description="Cola de amistades prioritaria" />
 
       {isLoading ? (
-        <div className="animate-pulse text-gray-400">Cargando...</div>
+        <div className="animate-pulse text-purple-300">Cargando...</div>
       ) : selected ? (
         <div>
           <button onClick={() => setSelected(null)} className="mb-4 text-sm text-purple-400 hover:text-purple-300">
             ← Volver a la cola
           </button>
-          <div className="rounded-lg border border-gray-800 bg-gray-900 p-6">
+          <div className="rounded-lg border border-purple-800 bg-purple-900 p-6">
             <h2 className="text-lg font-bold text-white">{selected.user.nickname ?? selected.user.email}</h2>
-            <p className="text-sm text-gray-400">{selected.user.email}</p>
+            <p className="text-sm text-purple-300">{selected.user.email}</p>
 
             <div className="mt-4 space-y-3">
               {selected.bots.map((bot) => (
-                <div key={bot.id} className="flex items-center justify-between rounded border border-gray-800 p-3">
+                <div key={bot.id} className="flex items-center justify-between rounded border border-purple-800 p-3">
                   <div>
                     <p className="text-sm font-medium text-white">{bot.fulfillment_account.name}</p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-purple-300">
                       Solicitud: {bot.request_status} — Amistad: {bot.friendship_status}
                     </p>
                     {bot.eligibility_at && (
-                      <p className="text-xs text-gray-400">Timer: {getTimerStatus(bot)}</p>
+                      <p className="text-xs text-purple-300">Timer: {getTimerStatus(bot)}</p>
                     )}
                   </div>
                   <div className="flex gap-2">
@@ -114,16 +114,16 @@ export default function AdminFriendshipsPage() {
             <button
               key={req.id}
               onClick={() => setSelected(req)}
-              className="w-full rounded-lg border border-gray-800 bg-gray-900 p-4 text-left transition hover:bg-gray-800/50"
+              className="w-full rounded-lg border border-purple-800 bg-purple-900 p-4 text-left transition hover:bg-purple-800/50"
             >
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-white">{req.user.nickname ?? req.user.email}</p>
-                  <p className="text-xs text-gray-400">{req.user.email}</p>
+                  <p className="text-xs text-purple-300">{req.user.email}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-gray-300">{req.bots.length} bots</p>
-                  <p className="text-xs text-gray-400">
+                  <p className="text-sm text-purple-100">{req.bots.length} bots</p>
+                  <p className="text-xs text-purple-300">
                     {req.bots.filter((b) => b.friendship_status === 'ACCEPTED').length} aceptados
                   </p>
                 </div>
@@ -131,7 +131,7 @@ export default function AdminFriendshipsPage() {
             </button>
           ))}
           {requests.length === 0 && (
-            <p className="text-center text-gray-400">No hay solicitudes pendientes</p>
+            <p className="text-center text-purple-300">No hay solicitudes pendientes</p>
           )}
         </div>
       )}

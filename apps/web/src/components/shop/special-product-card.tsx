@@ -1,5 +1,7 @@
 import { AddToCartButton } from '@/components/cart/add-to-cart-button'
+import { ProductPlaceholder } from '@/components/shop/product-placeholder'
 import type { SpecialProductType } from '@/lib/services/catalog/display-model'
+import { isValidImageUrl } from '@/lib/utils/url'
 
 interface SpecialProductCardProps {
   productId?: string
@@ -19,12 +21,16 @@ const SPECIAL_BADGES: Record<SpecialProductType, { label: string; color: string 
   VBucks: { label: 'V-Bucks', color: 'bg-yellow-500 text-black' },
   BATTLE_PASS: { label: 'Pase', color: 'bg-blue-600 text-white' },
   CREW: { label: 'Crew', color: 'bg-purple-600 text-white' },
+  DLC: { label: 'DLC', color: 'bg-emerald-600 text-white' },
+  JAM_TRACK: { label: 'Pista', color: 'bg-pink-600 text-white' },
 }
 
 const SPECIAL_TOP_COLORS: Record<SpecialProductType, string> = {
   VBucks: 'bg-yellow-500',
   BATTLE_PASS: 'bg-blue-600',
   CREW: 'bg-purple-600',
+  DLC: 'bg-emerald-600',
+  JAM_TRACK: 'bg-pink-600',
 }
 
 export function SpecialProductCard({
@@ -40,7 +46,11 @@ export function SpecialProductCard({
   specialType,
   onAddToCart,
 }: SpecialProductCardProps) {
-  const displayImage = imageUrl || iconUrl
+  const displayImage = isValidImageUrl(imageUrl)
+    ? imageUrl
+    : isValidImageUrl(iconUrl)
+      ? iconUrl
+      : null
   const badge = SPECIAL_BADGES[specialType]
   const topColor = SPECIAL_TOP_COLORS[specialType]
 
@@ -63,11 +73,7 @@ export function SpecialProductCard({
             loading="lazy"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-gray-600">
-            <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
+          <ProductPlaceholder />
         )}
       </div>
 

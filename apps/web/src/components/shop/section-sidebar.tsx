@@ -8,11 +8,14 @@ interface Section {
   title: string
   slug: string
   thumbUrl?: string | null
+  cardColor?: string
 }
 
 interface SectionSidebarProps {
   sections: Section[]
 }
+
+const FALLBACK_DOT_COLOR = '#7DD3FC'
 
 function scrollToSection(slug: string) {
   const el = document.getElementById(`section-${slug}`)
@@ -61,29 +64,44 @@ export function SectionSidebar({ sections }: SectionSidebarProps) {
             Secciones
           </h3>
           <ul className="space-y-1">
-            {sections.map((section) => (
-              <li key={section.slug}>
-                <button
-                  onClick={() => scrollToSection(section.slug)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors w-full text-left ${
-                    activeSection === section.slug
-                      ? 'bg-purple-600 text-white'
-                      : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-                  }`}
-                >
-                  {section.thumbUrl && (
-                    <Image
-                      src={section.thumbUrl}
-                      alt=""
-                      width={24}
-                      height={24}
-                      className="h-6 w-6 flex-shrink-0 rounded object-cover"
+            {sections.map((section) => {
+              const dotColor = section.cardColor ?? FALLBACK_DOT_COLOR
+              const isActive = activeSection === section.slug
+              return (
+                <li key={section.slug}>
+                  <button
+                    onClick={() => scrollToSection(section.slug)}
+                    className={`relative flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors w-full text-left ${
+                      isActive
+                        ? 'bg-purple-600 text-white'
+                        : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+                    }`}
+                  >
+                    {isActive && (
+                      <span
+                        className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r bg-white"
+                        aria-hidden="true"
+                      />
+                    )}
+                    <span
+                      className="h-2.5 w-2.5 flex-shrink-0 rounded-full ring-1 ring-white/25"
+                      style={{ backgroundColor: dotColor }}
+                      aria-hidden="true"
                     />
-                  )}
-                  {section.title}
-                </button>
-              </li>
-            ))}
+                    {section.thumbUrl && (
+                      <Image
+                        src={section.thumbUrl}
+                        alt=""
+                        width={24}
+                        height={24}
+                        className="h-6 w-6 flex-shrink-0 rounded object-cover"
+                      />
+                    )}
+                    {section.title}
+                  </button>
+                </li>
+              )
+            })}
           </ul>
         </div>
       </nav>
@@ -92,19 +110,27 @@ export function SectionSidebar({ sections }: SectionSidebarProps) {
       <nav className="lg:hidden sticky top-16 z-10 bg-gray-950 border-b border-gray-700">
         <div className="overflow-x-auto scrollbar-hide">
           <div className="flex gap-2 px-4 py-3">
-            {sections.map((section) => (
-              <button
-                key={section.slug}
-                onClick={() => scrollToSection(section.slug)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-sm transition-colors ${
-                  activeSection === section.slug
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`}
-              >
-                {section.title}
-              </button>
-            ))}
+            {sections.map((section) => {
+              const dotColor = section.cardColor ?? FALLBACK_DOT_COLOR
+              return (
+                <button
+                  key={section.slug}
+                  onClick={() => scrollToSection(section.slug)}
+                  className={`flex flex-shrink-0 items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors ${
+                    activeSection === section.slug
+                      ? 'bg-purple-600 text-white'
+                      : 'bg-gray-800 text-gray-300 hover:bg-gray-700 hover:text-white'
+                  }`}
+                >
+                  <span
+                    className="h-2 w-2 flex-shrink-0 rounded-full ring-1 ring-white/25"
+                    style={{ backgroundColor: dotColor }}
+                    aria-hidden="true"
+                  />
+                  {section.title}
+                </button>
+              )
+            })}
           </div>
         </div>
       </nav>

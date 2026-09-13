@@ -88,7 +88,7 @@ services:
       - LEGACY_FORNITE_URL=${LEGACY_FORNITE_URL:-https://fortnite-api.com}
       - API_FORTNITE_API_KEY=${API_FORTNITE_API_KEY:-}
       - API_FORNITE_URL=${API_FORNITE_URL:-https://prod.api-fortnite.com/api}
-      - CATALOG_PROVIDER=${CATALOG_PROVIDER:-legacy}
+      - CATALOG_PROVIDER=${CATALOG_PROVIDER:-api-fortnite}
       - CATALOG_SHADOW=${CATALOG_SHADOW:-false}
       - RESEND_API_KEY=${RESEND_API_KEY:-re_your_resend_api_key}
       - EMAIL_FROM=${EMAIL_FROM:-noreply@kindstyle.com}

@@ -71,6 +71,7 @@ describe('BundleCard — flujo de conflicto', () => {
         name="Pack Completo"
         imageUrl={null}
         priceVbucks={2500}
+        priceMxn={187.5}
         components={['Skin A', 'Skin B']}
       />
     )

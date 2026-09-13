@@ -4,7 +4,43 @@ import bcrypt from 'bcryptjs'
 
 const prisma = new PrismaClient()
 
-const MOCK_PRODUCTS = [
+// V-Bucks images from Fortnite CDN (commonly available)
+const VBUCKS_IMAGES: Record<number, { imageUrl: string; iconUrl: string }> = {
+  1000: {
+    imageUrl: 'https://cdn2.unrealengine.com/mtx-1000x1000-vbucks.png',
+    iconUrl: 'https://cdn2.unrealengine.com/mtx-1000x1000-vbucks.png',
+  },
+  2800: {
+    imageUrl: 'https://cdn2.unrealengine.com/mtx-2800x2800-vbucks.png',
+    iconUrl: 'https://cdn2.unrealengine.com/mtx-2800x2800-vbucks.png',
+  },
+  5000: {
+    imageUrl: 'https://cdn2.unrealengine.com/mtx-5000x5000-vbucks.png',
+    iconUrl: 'https://cdn2.unrealengine.com/mtx-5000x5000-vbucks.png',
+  },
+  13500: {
+    imageUrl: 'https://cdn2.unrealengine.com/mtx-13500x13500-vbucks.png',
+    iconUrl: 'https://cdn2.unrealengine.com/mtx-13500x13500-vbucks.png',
+  },
+}
+
+// Battle Pass image
+const BATTLE_PASS_IMAGE = 'https://cdn2.unrealengine.com/mtx-battlepass.png'
+
+// Crew image
+const CREW_IMAGE = 'https://cdn2.unrealengine.com/mtx-crew.png'
+
+interface MockProduct {
+  fortniteProductId: string
+  name: string
+  type: string
+  rarity: string
+  priceVbucks: number
+  imageUrl?: string
+  iconUrl?: string
+}
+
+const MOCK_PRODUCTS: MockProduct[] = [
   { fortniteProductId: 'CID_MOCK_001', name: 'Spider-Man', type: 'OUTFIT', rarity: 'EPIC', priceVbucks: 1500 },
   { fortniteProductId: 'CID_MOCK_002', name: 'Batman', type: 'OUTFIT', rarity: 'LEGENDARY', priceVbucks: 2000 },
   { fortniteProductId: 'CID_MOCK_003', name: 'Renegade Raider', type: 'OUTFIT', rarity: 'RARE', priceVbucks: 1200 },
@@ -29,13 +65,13 @@ const MOCK_PRODUCTS = [
   { fortniteProductId: 'Contrail_MOCK_001', name: 'Disco', type: 'CONTRAIL', rarity: 'UNCOMMON', priceVbucks: 300 },
   { fortniteProductId: 'Spray_MOCK_001', name: 'Sad Tomato', type: 'SPRAY', rarity: 'UNCOMMON', priceVbucks: 150 },
   { fortniteProductId: 'LS_MOCK_001', name: 'Season 5', type: 'LOADING_SCREEN', rarity: 'UNCOMMON', priceVbucks: 200 },
-  // Special Products
-  { fortniteProductId: 'VBucks_1000', name: '1,000 V-Bucks', type: 'VBucks', rarity: 'UNCOMMON', priceVbucks: 1000 },
-  { fortniteProductId: 'VBucks_2800', name: '2,800 V-Bucks', type: 'VBucks', rarity: 'UNCOMMON', priceVbucks: 2800 },
-  { fortniteProductId: 'VBucks_5000', name: '5,000 V-Bucks', type: 'VBucks', rarity: 'UNCOMMON', priceVbucks: 5000 },
-  { fortniteProductId: 'VBucks_13500', name: '13,500 V-Bucks', type: 'VBucks', rarity: 'UNCOMMON', priceVbucks: 13500 },
-  { fortniteProductId: 'BATTLE_PASS_S28', name: 'Pase de Batalla Capítulo 5 Temporada 4', type: 'BATTLE_PASS', rarity: 'LEGENDARY', priceVbucks: 950 },
-  { fortniteProductId: 'CREW_S28', name: 'Fortnite Crew - Septiembre 2026', type: 'CREW', rarity: 'ICON_SERIES', priceVbucks: 1950 },
+  // Special Products with images
+  { fortniteProductId: 'VBucks_1000', name: '1,000 V-Bucks', type: 'VBucks', rarity: 'UNCOMMON', priceVbucks: 1000, imageUrl: VBUCKS_IMAGES[1000].imageUrl, iconUrl: VBUCKS_IMAGES[1000].iconUrl },
+  { fortniteProductId: 'VBucks_2800', name: '2,800 V-Bucks', type: 'VBucks', rarity: 'UNCOMMON', priceVbucks: 2800, imageUrl: VBUCKS_IMAGES[2800].imageUrl, iconUrl: VBUCKS_IMAGES[2800].iconUrl },
+  { fortniteProductId: 'VBucks_5000', name: '5,000 V-Bucks', type: 'VBucks', rarity: 'UNCOMMON', priceVbucks: 5000, imageUrl: VBUCKS_IMAGES[5000].imageUrl, iconUrl: VBUCKS_IMAGES[5000].iconUrl },
+  { fortniteProductId: 'VBucks_13500', name: '13,500 V-Bucks', type: 'VBucks', rarity: 'UNCOMMON', priceVbucks: 13500, imageUrl: VBUCKS_IMAGES[13500].imageUrl, iconUrl: VBUCKS_IMAGES[13500].iconUrl },
+  { fortniteProductId: 'BATTLE_PASS_S28', name: 'Pase de Batalla Capítulo 5 Temporada 4', type: 'BATTLE_PASS', rarity: 'LEGENDARY', priceVbucks: 950, imageUrl: BATTLE_PASS_IMAGE, iconUrl: BATTLE_PASS_IMAGE },
+  { fortniteProductId: 'CREW_S28', name: 'Fortnite Crew - Septiembre 2026', type: 'CREW', rarity: 'ICON_SERIES', priceVbucks: 1950, imageUrl: CREW_IMAGE, iconUrl: CREW_IMAGE },
 ]
 
 function normalizeSlug(name: string): string {
@@ -126,7 +162,9 @@ async function main() {
         type: mock.type as any,
         rarity: mock.rarity as any,
         price_vbucks: mock.priceVbucks,
-        giftable: 'GIFTABLE',
+        image_url: mock.imageUrl || null,
+        icon_url: mock.iconUrl || null,
+        giftable: mock.type === 'VBucks' || mock.type === 'BATTLE_PASS' || mock.type === 'CREW' ? 'NOT_GIFTABLE' : 'GIFTABLE',
         active: true,
         visible: true,
         first_seen_at: now,

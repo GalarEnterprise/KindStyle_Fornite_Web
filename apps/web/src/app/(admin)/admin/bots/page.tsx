@@ -68,33 +68,33 @@ export default function AdminBotsPage() {
       />
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="mb-6 rounded-lg border border-gray-800 bg-gray-900 p-6">
+        <form onSubmit={handleSubmit} className="mb-6 rounded-lg border border-purple-800 bg-purple-900 p-6">
           <h3 className="mb-4 text-lg font-bold text-white">{editing ? 'Editar Bot' : 'Nuevo Bot'}</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs text-gray-400">Nombre</label>
+              <label className="block text-xs text-purple-300">Nombre</label>
               <input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="mt-1 w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white"
+                className="mt-1 w-full rounded border border-purple-700 bg-purple-900 px-3 py-2 text-sm text-white"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-400">Epic Account ID</label>
+              <label className="block text-xs text-purple-300">Epic Account ID</label>
               <input
                 value={form.epic_account_id}
                 onChange={(e) => setForm({ ...form, epic_account_id: e.target.value })}
-                className="mt-1 w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white"
+                className="mt-1 w-full rounded border border-purple-700 bg-purple-900 px-3 py-2 text-sm text-white"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-400">Estado</label>
+              <label className="block text-xs text-purple-300">Estado</label>
               <select
                 value={form.status}
                 onChange={(e) => setForm({ ...form, status: e.target.value })}
-                className="mt-1 w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white"
+                className="mt-1 w-full rounded border border-purple-700 bg-purple-900 px-3 py-2 text-sm text-white"
               >
                 <option value="ACTIVE">Activo</option>
                 <option value="INACTIVE">Inactivo</option>
@@ -105,7 +105,7 @@ export default function AdminBotsPage() {
             <button type="submit" className="rounded bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-500">
               {editing ? 'Guardar' : 'Crear'}
             </button>
-            <button type="button" onClick={() => { setShowForm(false); setEditing(null) }} className="rounded border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800">
+            <button type="button" onClick={() => { setShowForm(false); setEditing(null) }} className="rounded border border-purple-700 px-4 py-2 text-sm text-purple-200 hover:bg-purple-800">
               Cancelar
             </button>
           </div>
@@ -113,21 +113,21 @@ export default function AdminBotsPage() {
       )}
 
       {isLoading ? (
-        <div className="animate-pulse text-gray-400">Cargando bots...</div>
+        <div className="animate-pulse text-purple-300">Cargando bots...</div>
       ) : (
         <div className="space-y-3">
           {bots.map((bot) => (
-            <div key={bot.id} className="rounded-lg border border-gray-800 bg-gray-900 p-4">
+            <div key={bot.id} className="rounded-lg border border-purple-800 bg-purple-900 p-4">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium text-white">{bot.name}</p>
-                  <p className="text-xs text-gray-400">{bot.epic_account_id}</p>
+                  <p className="text-xs text-purple-300">{bot.epic_account_id}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className={`rounded px-2 py-1 text-xs ${bot.status === 'ACTIVE' ? 'bg-green-900 text-green-300' : 'bg-gray-800 text-gray-400'}`}>
+                  <span className={`rounded px-2 py-1 text-xs ${bot.status === 'ACTIVE' ? 'bg-green-900 text-green-300' : 'bg-purple-800 text-purple-300'}`}>
                     {bot.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-purple-300">
                     {bot.friendship_bots.length} asignaciones
                   </span>
                   <button onClick={() => handleEdit(bot)} className="text-purple-400 hover:text-purple-300 text-sm">
@@ -138,7 +138,7 @@ export default function AdminBotsPage() {
             </div>
           ))}
           {bots.length === 0 && (
-            <p className="text-center text-gray-400">No hay bots configurados</p>
+            <p className="text-center text-purple-300">No hay bots configurados</p>
           )}
         </div>
       )}

@@ -1,4 +1,5 @@
 import { createHash } from 'crypto'
+import { extractEntryTheme } from '@kindstyle/shared'
 import type { CatalogProvider, NormalizedShop, ProviderResult, NormalizedShopEntry } from './types'
 
 interface FortniteShopItem {
@@ -203,6 +204,8 @@ export class LegacyFortniteProvider implements CatalogProvider {
           }
         : null)
 
+      const theme = extractEntryTheme(entry)
+
       for (const item of entryItems) {
         if (isBundle) {
           const bundleKey = `${offerId ?? 'no-offer'}|${item.id}`
@@ -231,6 +234,7 @@ export class LegacyFortniteProvider implements CatalogProvider {
           layoutId,
           offerId,
           bundleInfo,
+          theme,
         })
       }
     }
@@ -239,6 +243,7 @@ export class LegacyFortniteProvider implements CatalogProvider {
 
     return {
       entries,
+      specialProducts: [],
       shopDate: response.data.date,
       checksum,
       provider: this.name,

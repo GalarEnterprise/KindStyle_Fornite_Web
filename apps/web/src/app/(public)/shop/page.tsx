@@ -2,6 +2,7 @@ import { getLatestSnapshot } from '@/lib/services/catalog/snapshot-service'
 import { buildShopDisplayModel, SPECIAL_PRODUCT_TYPES } from '@/lib/services/catalog/display-model'
 import type { SpecialProductType } from '@/lib/services/catalog/display-model'
 import { getBannerReferences } from '@/lib/services/catalog/banner-reference-service'
+import { getVbucksRate } from '@/lib/services/catalog/price-service'
 import { SectionSidebar } from '@/components/shop/section-sidebar'
 import { SectionHeader } from '@/components/shop/section-header'
 import { SpecialSectionHeader } from '@/components/shop/special-section-header'
@@ -11,6 +12,8 @@ import { SpecialProductCard } from '@/components/shop/special-product-card'
 import { LastUpdateBadge } from '@/components/shop/last-update-badge'
 import { ProductGridSkeleton } from '@/components/shop/product-grid'
 import { PostLoginHandler } from '@/components/shop/post-login-handler'
+import { CreatorCodeBanner } from '@/components/shop/creator-code-banner'
+import { buildSectionGradient, buildSectionTint } from '@/lib/utils/color'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,12 +22,14 @@ const SPECIAL_SLUG_SET = new Set<string>(
 )
 
 function getSpecialTypeFromSlug(slug: string): SpecialProductType | undefined {
-  return SPECIAL_PRODUCT_TYPES.find((c) => c.slug === slug)?.type
+  return SPECIAL_PRODUCT_TYPES.find((c) => c.slug === slug)?.types[0]
 }
 
 export default async function ShopPage() {
-  const snapshot = await getLatestSnapshot()
-  const vbucksRate = 7.5
+  const [snapshot, vbucksRate] = await Promise.all([
+    getLatestSnapshot(),
+    getVbucksRate(),
+  ])
 
   if (!snapshot) {
     return (
@@ -54,6 +59,7 @@ export default async function ShopPage() {
     title: s.title,
     slug: s.slug,
     thumbUrl: s.banner?.image ?? null,
+    cardColor: s.cardColor,
   }))
 
   return (
@@ -72,7 +78,10 @@ export default async function ShopPage() {
               })}
             </p>
           </div>
-          <LastUpdateBadge lastUpdated={snapshot.fetched_at.toISOString()} />
+          <div className="flex flex-col items-end gap-2">
+            <CreatorCodeBanner />
+            <LastUpdateBadge lastUpdated={snapshot.fetched_at.toISOString()} />
+          </div>
         </div>
 
         <div className="lg:flex lg:items-start lg:gap-8">
@@ -87,14 +96,25 @@ export default async function ShopPage() {
               displaySections.map((section, index) => {
                 const isSpecial = SPECIAL_SLUG_SET.has(section.slug)
                 const specialType = isSpecial ? getSpecialTypeFromSlug(section.slug) : undefined
+                const cardGradient = buildSectionGradient(
+                  section.cardColor,
+                  section.color2,
+                  section.sectionBgColor
+                )
+                const sectionTint = buildSectionTint(
+                  section.cardColor,
+                  section.color2,
+                  section.sectionBgColor
+                )
 
                 return (
                   <section
                     key={section.id}
                     id={`section-${section.slug}`}
-                    className="mb-8 shop-section"
+                    className="mb-8 shop-section rounded-xl p-4"
+                    style={{ background: sectionTint }}
                   >
-                    {isSpecial && specialType ? (
+                    {isSpecial && specialType && !section.useRegularCard ? (
                       <SpecialSectionHeader
                         title={section.title}
                         entryCount={section.entries.length}
@@ -107,6 +127,7 @@ export default async function ShopPage() {
                         title={section.title}
                         entryCount={section.entries.length}
                         banner={section.banner}
+                        sectionBgColor={section.sectionBgColor}
                         priority={index === 0}
                       />
                     )}
@@ -121,19 +142,22 @@ export default async function ShopPage() {
                               name={entry.name}
                               imageUrl={entry.imageUrl}
                               priceVbucks={entry.priceVbucks}
+                              priceMxn={(entry.priceVbucks * vbucksRate) / 100}
                               components={entry.components}
+                              cardColor={section.cardColor}
+                              cardGradient={cardGradient}
                             />
                           )
                         }
 
-                        if (isSpecial && specialType) {
+                        if (isSpecial && specialType && !section.useRegularCard) {
                           return (
                             <SpecialProductCard
                               key={entry.id}
                               productId={entry.product.id}
                               name={entry.product.name}
-                              priceVbucks={Number(entry.product.price_vbucks)}
-                              priceMxn={Number(entry.product.price_vbucks) * (vbucksRate / 100)}
+                              priceVbucks={entry.priceVbucks}
+                              priceMxn={(entry.priceVbucks * vbucksRate) / 100}
                               imageUrl={entry.product.image_url}
                               iconUrl={entry.product.icon_url}
                               type={entry.product.type}
@@ -149,14 +173,16 @@ export default async function ShopPage() {
                             key={entry.id}
                             productId={entry.product.id}
                             name={entry.product.name}
-                            priceVbucks={entry.product.price_vbucks}
-                            priceMxn={Number(entry.product.price_vbucks) * (vbucksRate / 100)}
+                            priceVbucks={entry.priceVbucks}
+                            priceMxn={(entry.priceVbucks * vbucksRate) / 100}
                             imageUrl={entry.product.image_url}
                             iconUrl={entry.product.icon_url}
                             rarity={entry.product.rarity}
                             type={entry.product.type}
                             giftable={entry.product.giftable}
                             visible={entry.product.visible}
+                            cardColor={section.cardColor}
+                            cardGradient={cardGradient}
                           />
                         )
                       })}

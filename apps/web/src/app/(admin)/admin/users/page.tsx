@@ -77,44 +77,44 @@ export default function AdminUsersPage() {
       />
 
       {showForm && (
-        <form onSubmit={handleCreate} className="mb-6 rounded-lg border border-gray-800 bg-gray-900 p-6">
+        <form onSubmit={handleCreate} className="mb-6 rounded-lg border border-purple-800 bg-purple-900 p-6">
           <h3 className="mb-4 text-lg font-bold text-white">Nuevo Admin</h3>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs text-gray-400">Email</label>
+              <label className="block text-xs text-purple-300">Email</label>
               <input
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="mt-1 w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white"
+                className="mt-1 w-full rounded border border-purple-700 bg-purple-900 px-3 py-2 text-sm text-white"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-400">Password</label>
+              <label className="block text-xs text-purple-300">Password</label>
               <input
                 type="password"
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
-                className="mt-1 w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white"
+                className="mt-1 w-full rounded border border-purple-700 bg-purple-900 px-3 py-2 text-sm text-white"
                 required
                 minLength={8}
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-400">Nickname</label>
+              <label className="block text-xs text-purple-300">Nickname</label>
               <input
                 value={form.nickname}
                 onChange={(e) => setForm({ ...form, nickname: e.target.value })}
-                className="mt-1 w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white"
+                className="mt-1 w-full rounded border border-purple-700 bg-purple-900 px-3 py-2 text-sm text-white"
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-400">Rol</label>
+              <label className="block text-xs text-purple-300">Rol</label>
               <select
                 value={form.role}
                 onChange={(e) => setForm({ ...form, role: e.target.value })}
-                className="mt-1 w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white"
+                className="mt-1 w-full rounded border border-purple-700 bg-purple-900 px-3 py-2 text-sm text-white"
               >
                 <option value="ADMIN">Admin</option>
                 <option value="SUPER_ADMIN">Super Admin</option>
@@ -126,7 +126,7 @@ export default function AdminUsersPage() {
             <button type="submit" className="rounded bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-500">
               Crear
             </button>
-            <button type="button" onClick={() => setShowForm(false)} className="rounded border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800">
+            <button type="button" onClick={() => setShowForm(false)} className="rounded border border-purple-700 px-4 py-2 text-sm text-purple-200 hover:bg-purple-800">
               Cancelar
             </button>
           </div>
@@ -134,18 +134,18 @@ export default function AdminUsersPage() {
       )}
 
       {isLoading ? (
-        <div className="animate-pulse text-gray-400">Cargando...</div>
+        <div className="animate-pulse text-purple-300">Cargando...</div>
       ) : (
         <div className="space-y-3">
           {users.map((user) => (
-            <div key={user.id} className="flex items-center justify-between rounded-lg border border-gray-800 bg-gray-900 p-4">
+            <div key={user.id} className="flex items-center justify-between rounded-lg border border-purple-800 bg-purple-900 p-4">
               <div>
                 <p className="font-medium text-white">{user.nickname ?? user.email}</p>
-                <p className="text-xs text-gray-400">{user.email}</p>
+                <p className="text-xs text-purple-300">{user.email}</p>
               </div>
               <div className="flex items-center gap-3">
                 <span className={`rounded px-2 py-1 text-xs ${
-                  user.role === 'SUPER_ADMIN' ? 'bg-yellow-900 text-yellow-300' : 'bg-gray-800 text-gray-300'
+                  user.role === 'SUPER_ADMIN' ? 'bg-yellow-900 text-yellow-300' : 'bg-purple-800 text-purple-200'
                 }`}>
                   {user.role}
                 </span>

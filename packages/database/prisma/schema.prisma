@@ -141,6 +141,8 @@ enum ProductType {
   CREW
   BUNDLE
   VEHICLE
+  JAM_TRACK
+  DLC
   OTHER
 }
 

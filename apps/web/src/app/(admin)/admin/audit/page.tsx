@@ -37,11 +37,11 @@ export default function AdminAuditPage() {
 
       <div className="mb-4 flex flex-wrap gap-3">
         <div>
-          <label className="block text-xs text-gray-400">Entidad</label>
+          <label className="block text-xs text-purple-300">Entidad</label>
           <select
             value={entity}
             onChange={(e) => { setEntity(e.target.value); setPage(1) }}
-            className="mt-1 rounded border border-gray-700 bg-gray-800 px-3 py-1.5 text-sm text-white"
+            className="mt-1 rounded border border-purple-700 bg-purple-900 px-3 py-1.5 text-sm text-white"
           >
             <option value="">Todas</option>
             <option value="USER">Usuarios</option>
@@ -54,11 +54,11 @@ export default function AdminAuditPage() {
           </select>
         </div>
         <div>
-          <label className="block text-xs text-gray-400">Acción</label>
+          <label className="block text-xs text-purple-300">Acción</label>
           <select
             value={action}
             onChange={(e) => { setAction(e.target.value); setPage(1) }}
-            className="mt-1 rounded border border-gray-700 bg-gray-800 px-3 py-1.5 text-sm text-white"
+            className="mt-1 rounded border border-purple-700 bg-purple-900 px-3 py-1.5 text-sm text-white"
           >
             <option value="">Todas</option>
             <option value="CREATED">Creación</option>
@@ -70,54 +70,54 @@ export default function AdminAuditPage() {
       </div>
 
       {isLoading ? (
-        <div className="animate-pulse text-gray-400">Cargando auditoría...</div>
+        <div className="animate-pulse text-purple-300">Cargando auditoría...</div>
       ) : (
         <div className="space-y-2">
           {events.map((event) => (
-            <div key={event.id} className="rounded border border-gray-800 bg-gray-900 p-3">
+            <div key={event.id} className="rounded border border-purple-800 bg-purple-900 p-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="rounded bg-gray-800 px-2 py-0.5 text-xs text-gray-300">{event.entity}</span>
+                  <span className="rounded bg-purple-800 px-2 py-0.5 text-xs text-purple-200">{event.entity}</span>
                   <span className="text-sm text-white">{event.action}</span>
-                  <span className="text-xs text-gray-500">{event.entity_id}</span>
+                  <span className="text-xs text-purple-400/60">{event.entity_id}</span>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-purple-300">
                     {event.user?.nickname ?? event.user?.email ?? 'Sistema'}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-purple-400/60">
                     {new Date(event.created_at).toLocaleString('es-MX')}
                   </p>
                 </div>
               </div>
               {event.metadata && Object.keys(event.metadata).length > 0 && (
-                <pre className="mt-2 overflow-x-auto text-xs text-gray-500">
+                <pre className="mt-2 overflow-x-auto text-xs text-purple-400/60">
                   {JSON.stringify(event.metadata, null, 2)}
                 </pre>
               )}
             </div>
           ))}
           {events.length === 0 && (
-            <p className="text-center text-gray-400">No hay eventos de auditoría</p>
+            <p className="text-center text-purple-300">No hay eventos de auditoría</p>
           )}
         </div>
       )}
 
       {totalPages > 1 && (
         <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-gray-400">{total} eventos — Página {page} de {totalPages}</p>
+          <p className="text-sm text-purple-300">{total} eventos — Página {page} de {totalPages}</p>
           <div className="flex gap-2">
             <button
               onClick={() => setPage(page - 1)}
               disabled={page <= 1}
-              className="rounded border border-gray-700 px-3 py-1 text-sm text-gray-300 hover:bg-gray-800 disabled:opacity-50"
+              className="rounded border border-purple-700 px-3 py-1 text-sm text-purple-200 hover:bg-purple-900 disabled:opacity-50"
             >
               Anterior
             </button>
             <button
               onClick={() => setPage(page + 1)}
               disabled={page >= totalPages}
-              className="rounded border border-gray-700 px-3 py-1 text-sm text-gray-300 hover:bg-gray-800 disabled:opacity-50"
+              className="rounded border border-purple-700 px-3 py-1 text-sm text-purple-200 hover:bg-purple-900 disabled:opacity-50"
             >
               Siguiente
             </button>

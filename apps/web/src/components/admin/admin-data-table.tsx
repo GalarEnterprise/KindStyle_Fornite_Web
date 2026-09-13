@@ -51,14 +51,14 @@ export function AdminDataTable<T>({
     <div>
       {filters && <div className="mb-4">{filters}</div>}
 
-      <div className="overflow-x-auto rounded-lg border border-gray-800">
+      <div className="overflow-x-auto rounded-lg border border-purple-800">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-800 bg-gray-900">
+            <tr className="border-b border-purple-800 bg-purple-900">
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`px-4 py-3 text-left text-xs font-medium text-gray-400 ${
+                  className={`px-4 py-3 text-left text-xs font-medium text-purple-300 ${
                     col.sortable ? 'cursor-pointer hover:text-white' : ''
                   }`}
                   onClick={() => col.sortable && handleSort(col.key)}
@@ -71,21 +71,21 @@ export function AdminDataTable<T>({
                   </span>
                 </th>
               ))}
-              {actions && <th className="px-4 py-3 text-right text-xs font-medium text-gray-400">Acciones</th>}
+              {actions && <th className="px-4 py-3 text-right text-xs font-medium text-purple-300">Acciones</th>}
             </tr>
           </thead>
           <tbody>
             {data.length === 0 ? (
               <tr>
-                <td colSpan={columns.length + (actions ? 1 : 0)} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={columns.length + (actions ? 1 : 0)} className="px-4 py-8 text-center text-purple-400/70">
                   {emptyMessage}
                 </td>
               </tr>
             ) : (
               data.map((item) => (
-                <tr key={keyExtractor(item)} className="border-b border-gray-800 hover:bg-gray-900/50">
+                <tr key={keyExtractor(item)} className="border-b border-purple-800 hover:bg-purple-900/50">
                   {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-3 text-gray-300">
+                    <td key={col.key} className="px-4 py-3 text-purple-100">
                       {col.render ? col.render(item) : String((item as Record<string, unknown>)[col.key] ?? '')}
                     </td>
                   ))}
@@ -101,21 +101,21 @@ export function AdminDataTable<T>({
 
       {totalPages > 1 && (
         <div className="mt-4 flex items-center justify-between">
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-purple-300">
             {total} resultados — Página {page} de {totalPages}
           </p>
           <div className="flex gap-2">
             <button
               onClick={() => onPageChange?.(page - 1)}
               disabled={page <= 1}
-              className="rounded border border-gray-700 px-3 py-1 text-sm text-gray-300 hover:bg-gray-800 disabled:opacity-50"
+              className="rounded border border-purple-700 px-3 py-1 text-sm text-purple-200 hover:bg-purple-900 disabled:opacity-50"
             >
               Anterior
             </button>
             <button
               onClick={() => onPageChange?.(page + 1)}
               disabled={page >= totalPages}
-              className="rounded border border-gray-700 px-3 py-1 text-sm text-gray-300 hover:bg-gray-800 disabled:opacity-50"
+              className="rounded border border-purple-700 px-3 py-1 text-sm text-purple-200 hover:bg-purple-900 disabled:opacity-50"
             >
               Siguiente
             </button>

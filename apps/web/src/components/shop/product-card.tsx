@@ -1,4 +1,6 @@
 import { AddToCartButton } from '@/components/cart/add-to-cart-button'
+import { ProductPlaceholder } from '@/components/shop/product-placeholder'
+import { isValidImageUrl } from '@/lib/utils/url'
 
 interface ProductCardProps {
   productId?: string
@@ -11,6 +13,8 @@ interface ProductCardProps {
   type: string
   giftable: string
   visible: boolean
+  cardColor?: string
+  cardGradient?: string
   onAddToCart?: () => void
 }
 
@@ -45,18 +49,30 @@ export function ProductCard({
   type,
   giftable,
   visible,
+  cardColor,
+  cardGradient,
   onAddToCart,
 }: ProductCardProps) {
-  const displayImage = imageUrl || iconUrl
+  const displayImage = isValidImageUrl(imageUrl)
+    ? imageUrl
+    : isValidImageUrl(iconUrl)
+      ? iconUrl
+      : null
   const rarityColor = rarity ? RARITY_COLORS[rarity] || 'bg-gray-500' : 'bg-gray-500'
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-lg bg-gray-900 border border-gray-700 transition-all hover:border-purple-500 hover:shadow-lg hover:shadow-purple-500/20">
+    <div
+      className="group relative flex flex-col overflow-hidden rounded-lg bg-gray-900 border border-gray-700 transition-all hover:border-purple-500 hover:shadow-lg hover:shadow-purple-500/20"
+      style={cardColor ? { borderColor: cardColor } : undefined}
+    >
       {rarity && (
         <div className={`absolute top-0 left-0 right-0 h-1 ${rarityColor}`} />
       )}
 
-      <div className="aspect-square overflow-hidden bg-gray-800">
+      <div
+        className="aspect-square overflow-hidden bg-gray-800"
+        style={cardGradient ? { background: cardGradient } : undefined}
+      >
         {displayImage ? (
           <img
             src={displayImage}
@@ -65,11 +81,7 @@ export function ProductCard({
             loading="lazy"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-gray-600">
-            <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
+          <ProductPlaceholder />
         )}
       </div>
 

@@ -336,7 +336,7 @@ El sistema DEBE crear una sección dedicada para productos de tipo `VBucks`.
 
 - La sección DEBE mostrarse con título "V-Bucks" y un slug `vbucks`
 - La sección DEBE incluir un aviso: "Requiere cuenta de Epic Games"
-- La sección DEBE mostrarse antes de las secciones de cosméticos regulares
+- La sección DEBE mostrarse al final de la página, después de las secciones de cosméticos regulares
 - Si no hay productos `VBucks` en el snapshot actual, la sección NO DEBE renderizarse
 - El `display_order` de la sección DEBE ser fijo y conocido (no depende del orden de la API)
 
@@ -344,7 +344,7 @@ El sistema DEBE crear una sección dedicada para productos de tipo `VBucks`.
 
 - **WHEN** el snapshot contiene al menos un producto de tipo `VBucks`
 - **THEN** se renderiza una sección "V-Bucks" con tarjetas de productos especiales
-- **AND** la sección aparece antes de las secciones de cosméticos
+- **AND** la sección aparece al final de la página, después de las secciones de cosméticos
 
 #### Scenario: Sin V-Bucks en el shop
 
@@ -358,14 +358,14 @@ El sistema DEBE crear una sección dedicada para productos de tipo `BATTLE_PASS`
 
 - La sección DEBE mostrarse con título "Pase de Batalla" y un slug `pase-de-batalla`
 - La sección DEBE incluir un aviso: "Requiere cuenta de Epic Games"
-- La sección DEBE mostrarse después de V-Bucks y antes de las secciones de cosméticos
+- La sección DEBE mostrarse en la zona de secciones especiales al final de la página, después de las secciones de cosméticos
 - Si no hay productos `BATTLE_PASS` en el snapshot actual, la sección NO DEBE renderizarse
 
 #### Scenario: Battle Pass disponible en el shop
 
 - **WHEN** el snapshot contiene al menos un producto de tipo `BATTLE_PASS`
 - **THEN** se renderiza una sección "Pase de Batalla" con tarjetas de productos especiales
-- **AND** la sección aparece después de V-Bucks y antes de cosméticos
+- **AND** la sección aparece en la zona de especiales al final de la página, después de las secciones de cosméticos
 
 #### Scenario: Sin Battle Pass en el shop
 
@@ -378,14 +378,14 @@ El sistema DEBE crear una sección dedicada para productos de tipo `CREW`.
 
 - La sección DEBE mostrarse con título "Fortnite Crew" y un slug `fortnite-crew`
 - La sección DEBE incluir un aviso: "Requiere cuenta de Epic Games"
-- La sección DEBE mostrarse después de Battle Pass y antes de las secciones de cosméticos
+- La sección DEBE mostrarse en la zona de secciones especiales al final de la página, después de las secciones de cosméticos
 - Si no hay productos `CREW` en el snapshot actual, la sección NO DEBE renderizarse
 
 #### Scenario: Crew disponible en el shop
 
 - **WHEN** el snapshot contiene al menos un producto de tipo `CREW`
 - **THEN** se renderiza una sección "Fortnite Crew" con tarjetas de productos especiales
-- **AND** la sección aparece después de Battle Pass y antes de cosméticos
+- **AND** la sección aparece en la zona de especiales al final de la página, después de las secciones de cosméticos
 
 #### Scenario: Sin Crew en el shop
 
@@ -411,23 +411,29 @@ Los productos especiales DEBEN usar un componente `SpecialProductCard` diferenci
 
 ### REQ-SPC-005: Orden de secciones especiales
 
-Las secciones especiales DEBEN mostrarse en un orden fijo antes de las secciones de cosméticos.
+Las secciones especiales DEBEN mostrarse en un orden fijo al final de la página, después de las secciones de cosméticos regulares.
 
-- Orden: V-Bucks → Battle Pass → Crew → Secciones de la API (cosméticos)
+- Orden: Secciones de la API (cosméticos) → V-Bucks → Battle Pass → Crew → Pistas de improvisación
 - Si una sección está vacía (sin productos), DEBE omitirse sin alterar el orden de las demás
 - Las secciones de cosméticos DEBEN conservar su orden original de la API
 
 #### Scenario: Todas las secciones especiales vacías
 
-- **WHEN** no hay productos de tipos `VBucks`, `BATTLE_PASS` ni `CREW`
+- **WHEN** no hay productos de tipos `VBucks`, `BATTLE_PASS`, `CREW` ni `JAM_TRACK`
 - **THEN** solo se muestran las secciones de cosméticos regulares
 - **AND** no se muestra ningún espacio vacío ni placeholder
 
 #### Scenario: Solo V-Bucks disponible
 
 - **WHEN** solo hay productos de tipo `VBucks`
-- **THEN** se muestra la sección "V-Bucks" seguida de las secciones de cosméticos
-- **AND** no se muestran secciones vacías de Battle Pass ni Crew
+- **THEN** se muestran las secciones de cosméticos seguidas de la sección "V-Bucks"
+- **AND** no se muestran secciones vacías de Battle Pass, Crew ni Pistas
+
+#### Scenario: Secciones especiales después de cosméticos
+
+- **WHEN** hay productos de tipos `VBucks`, `BATTLE_PASS`, `CREW` y `JAM_TRACK`
+- **THEN** las secciones de cosméticos aparecen primero
+- **AND** las secciones especiales aparecen después en el orden: V-Bucks → Battle Pass → Crew → Pistas de improvisación
 
 ### REQ-SPC-006: Navegación lateral con secciones especiales
 
@@ -435,7 +441,7 @@ La sidebar de navegación DEBE incluir enlaces a las secciones especiales.
 
 - Cada sección especial DEBE tener un enlace en la sidebar con el mismo formato que las secciones regulares
 - Los enlaces DEBEN apuntar a `#section-{slug}` (ej: `#section-vbucks`)
-- Las secciones especiales DEBEN aparecer al inicio de la lista de navegación
+- Las secciones especiales DEBEN aparecer al final de la lista de navegación, acorde al orden de las secciones en la página
 - El scroll-spy DEBE funcionar correctamente con las nuevas secciones
 
 #### Scenario: Sidebar incluye secciones especiales
@@ -443,6 +449,38 @@ La sidebar de navegación DEBE incluir enlaces a las secciones especiales.
 - **WHEN** la página del shop se renderiza con secciones especiales
 - **THEN** la sidebar muestra enlaces para V-Bucks, Battle Pass y Crew (si tienen productos)
 - **AND** el scroll-spy resalta la sección activa al hacer scroll
+
+### REQ-SPC-007: Validación de URL de imagen de producto
+
+El sistema DEBE validar y filtrar URLs de imagen antes de renderizarlas en las tarjetas de producto.
+
+- Si `image_url` es null o vacía, DEBE usar `icon_url` como fallback
+- Si ambas URLs son null o vacías, DEBE mostrar un placeholder genérico
+- Las URLs DEBEN ser validadas como URIs válidas antes de usarlas en atributos `src`
+- Las URLs DEBEN usar protocolo HTTPS o ser rutas relativas
+
+#### Scenario: Producto con image_url válida
+
+- **WHEN** un producto tiene `image_url` con valor HTTPS válido
+- **THEN** la tarjeta muestra la imagen de `image_url`
+
+#### Scenario: Producto sin image_url pero con icon_url
+
+- **WHEN** un producto tiene `image_url` null y `icon_url` con valor válido
+- **THEN** la tarjeta muestra la imagen de `icon_url`
+
+#### Scenario: Producto sin ninguna imagen
+
+- **WHEN** un producto tiene tanto `image_url` como `icon_url` en null o vacío
+- **THEN** la tarjeta muestra un placeholder genérico con icono de imagen
+- **AND** no se genera un error de renderizado
+
+#### Scenario: URL de imagen con protocolo no válido
+
+- **WHEN** un producto tiene `image_url` con protocolo distinto de HTTPS (ej: `http://`, `javascript:`, etc.)
+- **THEN** la imagen NO se renderiza
+- **AND** se usa `icon_url` como fallback
+- **AND** si `icon_url` tampoco es válida, se muestra el placeholder
 
 ## Sección Banners — Datos de Referencia
 ### Requirement: Sincronización de banners de referencia

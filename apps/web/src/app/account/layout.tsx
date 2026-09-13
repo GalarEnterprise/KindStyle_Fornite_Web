@@ -17,12 +17,12 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   const pathname = usePathname()
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen bg-purple-950">
       {/* Mobile hamburger button */}
-      <div className="fixed left-0 top-0 z-50 flex items-center border-b border-gray-800 bg-gray-950 px-4 py-3 md:hidden">
+      <div className="fixed left-0 top-0 z-50 flex items-center border-b border-purple-800 bg-purple-950 px-4 py-3 md:hidden">
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="rounded-md p-1.5 text-gray-400 hover:bg-gray-800 hover:text-white"
+          className="rounded-md p-1.5 text-purple-300 hover:bg-purple-800 hover:text-white"
           aria-label="Toggle menu"
         >
           <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -46,13 +46,13 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 z-40 h-full w-64 border-r border-gray-800 bg-gray-900 transition-transform duration-200 md:translate-x-0 ${
+        className={`fixed left-0 top-0 z-40 h-full w-64 border-r border-purple-800 bg-purple-900 transition-transform duration-200 md:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex h-full flex-col">
           {/* Sidebar header */}
-          <div className="border-b border-gray-800 p-4">
+          <div className="border-b border-purple-800 p-4">
             <h2 className="text-lg font-bold text-white">Mi cuenta</h2>
           </div>
 
@@ -67,8 +67,8 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
                     isActive
-                      ? 'bg-purple-600/20 text-purple-400'
-                      : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                      ? 'bg-purple-600 text-white'
+                      : 'text-purple-200/70 hover:bg-purple-800 hover:text-white'
                   }`}
                 >
                   <span className="text-base">{item.icon}</span>
@@ -79,11 +79,11 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
           </nav>
 
           {/* Return to shop */}
-          <div className="border-t border-gray-800 p-3">
+          <div className="border-t border-purple-800 p-3">
             <Link
               href="/shop"
               onClick={() => setSidebarOpen(false)}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-400 transition hover:bg-gray-800 hover:text-white"
+              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-purple-200/70 transition hover:bg-purple-800 hover:text-white"
             >
               <span className="text-base">🏪</span>
               Volver a la tienda

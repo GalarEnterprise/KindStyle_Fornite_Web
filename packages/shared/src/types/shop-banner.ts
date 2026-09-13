@@ -1,5 +1,6 @@
 export interface ShopEntryTheme {
   color1?: string
+  color2?: string
   color3?: string
   textBackgroundColor?: string
   tileImage?: string
@@ -7,6 +8,7 @@ export interface ShopEntryTheme {
 
 export interface ShopThemeSourceColors {
   color1?: string
+  color2?: string
   color3?: string
   textBackgroundColor?: string
   [key: string]: string | undefined

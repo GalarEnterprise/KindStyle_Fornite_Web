@@ -61,9 +61,9 @@ export default function AdminPaymentsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-950 p-8">
+      <div className="min-h-screen bg-purple-950 p-8">
         <div className="mx-auto max-w-6xl">
-          <div className="animate-pulse text-gray-400">Cargando pagos...</div>
+          <div className="animate-pulse text-purple-300">Cargando pagos...</div>
         </div>
       </div>
     )
@@ -71,7 +71,7 @@ export default function AdminPaymentsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-950 p-8">
+      <div className="min-h-screen bg-purple-950 p-8">
         <div className="mx-auto max-w-6xl">
           <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-red-400">
             {error}
@@ -82,7 +82,7 @@ export default function AdminPaymentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 p-8">
+    <div className="min-h-screen bg-purple-950 p-8">
       <div className="mx-auto max-w-6xl">
         <h1 className="text-2xl font-bold text-white">Gestión de Pagos</h1>
 
@@ -92,7 +92,7 @@ export default function AdminPaymentsPage() {
             className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
               filter === ''
                 ? 'bg-purple-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                : 'bg-purple-900 text-purple-300 hover:bg-purple-800'
             }`}
           >
             Todos
@@ -102,7 +102,7 @@ export default function AdminPaymentsPage() {
             className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
               filter === 'VALIDATION_IN_PROGRESS'
                 ? 'bg-purple-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                : 'bg-purple-900 text-purple-300 hover:bg-purple-800'
             }`}
           >
             Pendientes
@@ -112,7 +112,7 @@ export default function AdminPaymentsPage() {
             className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
               filter === 'VALIDATED'
                 ? 'bg-purple-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                : 'bg-purple-900 text-purple-300 hover:bg-purple-800'
             }`}
           >
             Validados
@@ -122,7 +122,7 @@ export default function AdminPaymentsPage() {
             className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
               filter === 'REJECTED'
                 ? 'bg-purple-600 text-white'
-                : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                : 'bg-purple-900 text-purple-300 hover:bg-purple-800'
             }`}
           >
             Rechazados
@@ -131,7 +131,7 @@ export default function AdminPaymentsPage() {
 
         <div className="mt-6 space-y-4">
           {payments.length === 0 ? (
-            <div className="text-center text-gray-400">No hay pagos</div>
+            <div className="text-center text-purple-300">No hay pagos</div>
           ) : (
             payments.map((payment) => (
               <AdminPaymentCard key={payment.id} payment={payment} onComplete={fetchPayments} />
@@ -181,13 +181,13 @@ function AdminPaymentCard({ payment, onComplete }: { payment: Payment; onComplet
   }
 
   return (
-    <div className="rounded-lg border border-gray-800 bg-gray-900 p-6">
+    <div className="rounded-lg border border-purple-800 bg-purple-900 p-6">
       <div className="flex items-center justify-between">
         <div>
           <span className="text-sm font-medium text-white">
             {payment.request.request_number}
           </span>
-          <span className="ml-3 text-sm text-gray-400">
+          <span className="ml-3 text-sm text-purple-300">
             {payment.request.user.nickname ?? payment.request.user.email}
           </span>
         </div>
@@ -198,16 +198,16 @@ function AdminPaymentCard({ payment, onComplete }: { payment: Payment; onComplet
 
       <div className="mt-4 space-y-2">
         {payment.request.items.map((item) => (
-          <div key={item.id} className="flex justify-between text-sm text-gray-400">
+          <div key={item.id} className="flex justify-between text-sm text-purple-300">
             <span>{item.product_name_snapshot}</span>
             <span>{item.price_vbucks_snapshot} V-Bucks x{item.quantity}</span>
           </div>
         ))}
       </div>
 
-      <div className="mt-4 border-t border-gray-800 pt-4">
+      <div className="mt-4 border-t border-purple-800 pt-4">
         <div className="flex justify-between">
-          <span className="text-gray-400">Total</span>
+          <span className="text-purple-300">Total</span>
           <span className="text-lg font-bold text-white">
             ${Number(payment.amount).toFixed(2)} MXN
           </span>
@@ -247,9 +247,9 @@ function AdminPaymentCard({ payment, onComplete }: { payment: Payment; onComplet
       )}
 
       {payment.admin_notes && (
-        <div className="mt-4 rounded-lg border border-gray-800 bg-gray-800/50 p-3">
-          <span className="text-xs text-gray-400">Motivo de rechazo:</span>
-          <p className="mt-1 text-sm text-gray-300">{payment.admin_notes}</p>
+        <div className="mt-4 rounded-lg border border-purple-800 bg-purple-800/50 p-3">
+          <span className="text-xs text-purple-300">Motivo de rechazo:</span>
+          <p className="mt-1 text-sm text-purple-100">{payment.admin_notes}</p>
         </div>
       )}
 
@@ -277,15 +277,15 @@ function RejectModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="w-full max-w-md rounded-lg border border-gray-800 bg-gray-900 p-6">
+      <div className="w-full max-w-md rounded-lg border border-purple-800 bg-purple-900 p-6">
         <h3 className="text-lg font-bold text-white">Rechazar Pago</h3>
-        <p className="mt-2 text-sm text-gray-400">
+        <p className="mt-2 text-sm text-purple-300">
           Ingresa el motivo del rechazo:
         </p>
         <textarea
           value={reason}
           onChange={(e) => setReason(e.target.value)}
-          className="mt-3 w-full rounded-lg border border-gray-700 bg-gray-800 p-3 text-sm text-white placeholder-gray-500 focus:border-purple-500 focus:outline-none"
+          className="mt-3 w-full rounded-lg border border-purple-700 bg-purple-900 p-3 text-sm text-white placeholder-purple-400/60 focus:border-purple-500 focus:outline-none"
           rows={3}
           placeholder="Motivo del rechazo..."
         />
@@ -293,7 +293,7 @@ function RejectModal({
           <button
             onClick={onClose}
             disabled={isProcessing}
-            className="rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:bg-gray-800"
+            className="rounded-lg border border-purple-700 px-4 py-2 text-sm text-purple-200 hover:bg-purple-800"
           >
             Cancelar
           </button>

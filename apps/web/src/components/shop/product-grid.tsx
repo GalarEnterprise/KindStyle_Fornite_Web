@@ -15,10 +15,11 @@ interface ProductData {
 
 interface ProductGridProps {
   products: ProductData[]
+  cardColor?: string
   onAddToCart?: (productId: string) => void
 }
 
-export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
+export function ProductGrid({ products, cardColor, onAddToCart }: ProductGridProps) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
       {products.map((product) => (
@@ -34,6 +35,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
           type={product.type}
           giftable={product.giftable}
           visible={product.visible}
+          cardColor={cardColor}
           onAddToCart={() => onAddToCart?.(product.id)}
         />
       ))}

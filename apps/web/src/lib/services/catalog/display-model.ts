@@ -7,23 +7,26 @@ import {
 
 type ShopItemWithProduct = ShopItem & { product: Product }
 
-export type SpecialProductType = 'VBucks' | 'BATTLE_PASS' | 'CREW'
+export type SpecialProductType = 'VBucks' | 'BATTLE_PASS' | 'CREW' | 'DLC' | 'JAM_TRACK'
 
 export type SpecialSectionConfig = {
-  type: SpecialProductType
+  types: SpecialProductType[]
   title: string
   slug: string
   order: number
+  useRegularCard?: boolean
 }
 
 export const SPECIAL_PRODUCT_TYPES: SpecialSectionConfig[] = [
-  { type: 'VBucks', title: 'V-Bucks', slug: 'vbucks', order: 0 },
-  { type: 'BATTLE_PASS', title: 'Pase de Batalla', slug: 'pase-de-batalla', order: 1 },
-  { type: 'CREW', title: 'Fortnite Crew', slug: 'fortnite-crew', order: 2 },
+  { types: ['VBucks'], title: 'V-Bucks', slug: 'vbucks', order: 100 },
+  { types: ['BATTLE_PASS'], title: 'Pase de Batalla', slug: 'pase-de-batalla', order: 101 },
+  { types: ['CREW'], title: 'Fortnite Crew', slug: 'fortnite-crew', order: 102 },
+  { types: ['DLC'], title: 'DLC', slug: 'dlc', order: 103 },
+  { types: ['JAM_TRACK'], title: 'Pistas de improvisación', slug: 'pistas-de-improvisacion', order: 104, useRegularCard: true },
 ]
 
 const SPECIAL_TYPE_SET = new Set<SpecialProductType>(
-  SPECIAL_PRODUCT_TYPES.map((c) => c.type)
+  SPECIAL_PRODUCT_TYPES.flatMap((c) => c.types)
 )
 
 export type ShopSection = {
@@ -69,6 +72,20 @@ export type ShopDisplaySection = {
   layoutId: string | null
   entries: ShopDisplayEntry[]
   banner?: ShopDisplayBanner
+  cardColor: string
+  color2?: string
+  sectionBgColor: string
+  useRegularCard?: boolean
+}
+
+export const FALLBACK_CARD_COLOR = '#7DD3FC'
+export const FALLBACK_SECTION_BG_COLOR = '#C084FC'
+
+type ResolvedSectionVisuals = {
+  banner?: ShopDisplayBanner
+  cardColor: string
+  color2?: string
+  sectionBgColor: string
 }
 
 function fnv1a(input: string): number {
@@ -86,15 +103,19 @@ function resolveSectionBanner(
   slug: string,
   referenceBanners: BannerReference[],
   takenBannerIds: Set<string>
-): ShopDisplayBanner | undefined {
+): ResolvedSectionVisuals {
   const baseItem =
     sectionItems.find((item) => item.featured) ?? sectionItems[0]
 
   const theme = parseShopEntryTheme(baseItem?.theme)
   const color1 = theme?.color1
+  const color2 = theme?.color2
   const color3 = theme?.color3
   const textBackgroundColor = theme?.textBackgroundColor
   const tileImage = isAllowedImageHost(theme?.tileImage) ? theme?.tileImage : undefined
+
+  const cardColor = color1 ?? FALLBACK_CARD_COLOR
+  const sectionBgColor = color3 ?? textBackgroundColor ?? FALLBACK_SECTION_BG_COLOR
 
   if (tileImage || (color1 && color3) || textBackgroundColor) {
     const banner: ShopDisplayBanner = {}
@@ -104,7 +125,7 @@ function resolveSectionBanner(
     } else if (textBackgroundColor) {
       banner.backgroundColor = textBackgroundColor
     }
-    return banner
+    return { banner, cardColor, color2, sectionBgColor }
   }
 
   if (referenceBanners.length > 0) {
@@ -118,11 +139,11 @@ function resolveSectionBanner(
       if (!isAllowedImageHost(candidate.iconUrl)) continue
 
       takenBannerIds.add(candidate.id)
-      return { image: candidate.iconUrl }
+      return { banner: { image: candidate.iconUrl }, cardColor, color2, sectionBgColor }
     }
   }
 
-  return undefined
+  return { banner: undefined, cardColor, color2, sectionBgColor }
 }
 
 function normalizeSlug(name: string): string {
@@ -161,8 +182,21 @@ function extractSections(items: ShopItemWithProduct[]): ShopSection[] {
   return Array.from(sectionMap.values()).sort((a, b) => a.order - b.order)
 }
 
+function hasValidPrice(item: ShopItemWithProduct): boolean {
+  const productPrice = item.product.price_vbucks
+  const shopItemPrice = item.price_vbucks
+  return (productPrice > 0) || (shopItemPrice > 0)
+}
+
+function getEffectivePrice(item: ShopItemWithProduct): number {
+  const productPrice = item.product.price_vbucks
+  if (productPrice > 0) return productPrice
+  return item.price_vbucks
+}
+
 function createDisplayEntry(item: ShopItemWithProduct): ShopDisplayEntry {
   const bundleInfo = item.bundle_info as { name: string; info: string; image: string } | null
+  const effectivePrice = getEffectivePrice(item)
 
   if (bundleInfo) {
     return {
@@ -170,7 +204,7 @@ function createDisplayEntry(item: ShopItemWithProduct): ShopDisplayEntry {
       id: item.id,
       name: bundleInfo.name,
       imageUrl: bundleInfo.image,
-      priceVbucks: item.price_vbucks,
+      priceVbucks: effectivePrice,
       components: [item.product.name],
       section: item.section || '',
       offerId: item.offer_id,
@@ -181,7 +215,7 @@ function createDisplayEntry(item: ShopItemWithProduct): ShopDisplayEntry {
     type: 'item',
     id: item.id,
     product: item.product,
-    priceVbucks: item.price_vbucks,
+    priceVbucks: effectivePrice,
     section: item.section || '',
   }
 }
@@ -192,6 +226,7 @@ function groupBundlesByOfferId(
 ): ShopDisplayEntry[] {
   const offerGroups = new Map<string, ShopItemWithProduct[]>()
   const noOfferItems: ShopItemWithProduct[] = []
+  const seenProductIds = new Set<string>()
 
   for (const item of items) {
     if (!item.bundle_info) {
@@ -230,6 +265,8 @@ function groupBundlesByOfferId(
   }
 
   for (const item of noOfferItems) {
+    if (seenProductIds.has(item.product_id)) continue
+    seenProductIds.add(item.product_id)
     entries.push(createDisplayEntry(item))
   }
 
@@ -258,7 +295,7 @@ function dedupeShopItems(items: ShopItemWithProduct[]): ShopItemWithProduct[] {
 
 export function filterSpecialProducts(
   items: ShopItemWithProduct[],
-  types: readonly SpecialProductType[] = SPECIAL_PRODUCT_TYPES.map((c) => c.type)
+  types: readonly SpecialProductType[] = SPECIAL_PRODUCT_TYPES.flatMap((c) => c.types)
 ): ShopItemWithProduct[] {
   const typeSet = new Set(types)
   return items.filter((item) => typeSet.has(item.product.type as SpecialProductType))
@@ -278,13 +315,14 @@ export function buildSpecialSections(
   const sections: ShopDisplaySection[] = []
 
   for (const config of SPECIAL_PRODUCT_TYPES) {
+    const typeSet = new Set(config.types)
     const typeItems = filteredItems.filter(
-      (item) => item.product.type === config.type
+      (item) => typeSet.has(item.product.type as SpecialProductType)
     )
     if (typeItems.length === 0) continue
 
     const entries = typeItems.map((item) => createDisplayEntry(item))
-    const banner = resolveSectionBanner(
+    const { banner, cardColor, color2, sectionBgColor } = resolveSectionBanner(
       typeItems,
       null,
       config.slug,
@@ -300,6 +338,10 @@ export function buildSpecialSections(
       layoutId: null,
       entries,
       banner,
+      cardColor,
+      color2,
+      sectionBgColor,
+      useRegularCard: config.useRegularCard,
     })
   }
 
@@ -311,10 +353,17 @@ export function buildShopDisplayModel(
   referenceBanners: BannerReference[] = []
 ): ShopDisplaySection[] {
   const items = dedupeShopItems(rawItems)
+
+  const validPriceItems = items.filter((item) => hasValidPrice(item))
+  const filteredCount = items.length - validPriceItems.length
+  if (filteredCount > 0) {
+    console.log(`[display-model] Filtered ${filteredCount} products with price 0`)
+  }
+
   const takenBannerIds = new Set<string>()
 
-  const specialItems = filterSpecialProducts(items)
-  const regularItems = extractRegularItems(items)
+  const specialItems = filterSpecialProducts(validPriceItems)
+  const regularItems = extractRegularItems(validPriceItems)
 
   const specialSections = buildSpecialSections(specialItems, referenceBanners, takenBannerIds)
 
@@ -326,19 +375,28 @@ export function buildShopDisplayModel(
     if (sectionItems.length === 0) continue
 
     const entries = groupBundlesByOfferId(sectionItems, section.title)
-    const banner = resolveSectionBanner(sectionItems, section.layoutId, section.slug, referenceBanners, takenBannerIds)
+    const { banner, cardColor, color2, sectionBgColor } = resolveSectionBanner(sectionItems, section.layoutId, section.slug, referenceBanners, takenBannerIds)
 
     regularSections.push({
       ...section,
       entries,
       banner,
+      cardColor,
+      color2,
+      sectionBgColor,
     })
   }
 
   const itemsWithoutSection = regularItems.filter((item) => !item.section)
   if (itemsWithoutSection.length > 0) {
-    const entries = itemsWithoutSection.map((item) => createDisplayEntry(item))
-    const otherBanner = resolveSectionBanner(
+    const seenProductIds = new Set<string>()
+    const uniqueItems = itemsWithoutSection.filter((item) => {
+      if (seenProductIds.has(item.product_id)) return false
+      seenProductIds.add(item.product_id)
+      return true
+    })
+    const entries = uniqueItems.map((item) => createDisplayEntry(item))
+    const { banner: otherBanner, cardColor, color2, sectionBgColor } = resolveSectionBanner(
       itemsWithoutSection,
       null,
       'otros',
@@ -353,8 +411,11 @@ export function buildShopDisplayModel(
       layoutId: null,
       entries,
       banner: otherBanner,
+      cardColor,
+      color2,
+      sectionBgColor,
     })
   }
 
-  return [...specialSections, ...regularSections]
+  return [...regularSections, ...specialSections]
 }

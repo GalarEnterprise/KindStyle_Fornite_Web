@@ -1,20 +1,25 @@
 import Image from 'next/image'
 import type { ShopDisplayBanner } from '@/lib/services/catalog/display-model'
+import { withAlpha } from '@/lib/utils/color'
 
 interface SectionHeaderProps {
   title: string
   entryCount: number
   banner?: ShopDisplayBanner
+  sectionBgColor?: string
   priority?: boolean
 }
 
-export function SectionHeader({ title, entryCount, banner, priority = false }: SectionHeaderProps) {
+export function SectionHeader({ title, entryCount, banner, sectionBgColor, priority = false }: SectionHeaderProps) {
   if (!banner) {
     return (
-      <h2 className="mb-4 text-xl font-bold text-white flex items-center gap-2">
+      <h2
+        className="mb-4 rounded-lg px-4 py-3 text-xl font-bold text-white flex items-center gap-2"
+        style={sectionBgColor ? { backgroundColor: withAlpha(sectionBgColor, 0.25) } : undefined}
+      >
         <span className="h-5 w-1 rounded-full bg-purple-500" />
         {title}
-        <span className="text-sm font-normal text-gray-400">({entryCount})</span>
+        <span className="text-sm font-normal text-gray-300">({entryCount})</span>
       </h2>
     )
   }

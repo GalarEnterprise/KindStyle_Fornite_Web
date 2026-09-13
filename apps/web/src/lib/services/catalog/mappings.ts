@@ -22,6 +22,8 @@ export const TYPE_MAP: Record<string, ProductType> = {
   'vehicledrug': 'VEHICLE',
   'vehiclebody': 'VEHICLE',
   'vehicleskin': 'VEHICLE',
+  'sparkssong': 'JAM_TRACK',
+  'sparksong': 'JAM_TRACK',
 }
 
 export const RARITY_MAP: Record<string, Rarity> = {
@@ -76,5 +78,7 @@ export const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
   'CREW': 'Fortnite Crew',
   'BUNDLE': 'Bundles',
   'VEHICLE': 'Vehicles',
+  'JAM_TRACK': 'Pistas de Improvisación',
+  'DLC': 'Pases y DLC',
   'OTHER': 'Otros',
 }

@@ -414,16 +414,13 @@ describe('buildSpecialSections', () => {
 
     const result = buildSpecialSections(items, [], new Set())
 
-    expect(result).toHaveLength(3)
+    expect(result).toHaveLength(2)
     expect(result[0].slug).toBe('vbucks')
     expect(result[0].title).toBe('V-Bucks')
-    expect(result[0].order).toBe(0)
-    expect(result[1].slug).toBe('pase-de-batalla')
-    expect(result[1].title).toBe('Pase de Batalla')
-    expect(result[1].order).toBe(1)
-    expect(result[2].slug).toBe('fortnite-crew')
-    expect(result[2].title).toBe('Fortnite Crew')
-    expect(result[2].order).toBe(2)
+    expect(result[0].order).toBe(100)
+    expect(result[1].slug).toBe('pases-crew-dlc')
+    expect(result[1].title).toBe('Pases, Crew y DLC')
+    expect(result[1].order).toBe(101)
   })
 
   it('should skip empty special sections', () => {
@@ -447,7 +444,7 @@ describe('buildSpecialSections', () => {
 })
 
 describe('buildShopDisplayModel with special sections', () => {
-  it('should place special sections before regular sections', () => {
+  it('should place special sections after regular sections', () => {
     const items = [
       createMockShopItemWithProduct({ type: 'VBucks', name: '1000 V-Bucks' }, { section: 'V-Bucks' }),
       createMockShopItemWithProduct({ type: 'OUTFIT', name: 'Skin' }, { section: 'Featured' }),
@@ -456,8 +453,8 @@ describe('buildShopDisplayModel with special sections', () => {
     const result = buildShopDisplayModel(items)
 
     expect(result).toHaveLength(2)
-    expect(result[0].slug).toBe('vbucks')
-    expect(result[1].title).toBe('Featured')
+    expect(result[0].title).toBe('Featured')
+    expect(result[1].slug).toBe('vbucks')
   })
 
   it('should handle mixed special and regular items correctly', () => {
@@ -471,10 +468,10 @@ describe('buildShopDisplayModel with special sections', () => {
     const result = buildShopDisplayModel(items)
 
     expect(result).toHaveLength(4)
-    expect(result[0].slug).toBe('vbucks')
-    expect(result[1].slug).toBe('pase-de-batalla')
-    expect(result[2].title).toBe('Featured')
-    expect(result[3].title).toBe('Daily')
+    expect(result[0].title).toBe('Featured')
+    expect(result[1].title).toBe('Daily')
+    expect(result[2].slug).toBe('vbucks')
+    expect(result[3].slug).toBe('pases-crew-dlc')
   })
 
   it('should omit empty special sections', () => {
@@ -498,7 +495,7 @@ describe('buildShopDisplayModel with special sections', () => {
 
     expect(result).toHaveLength(2)
     expect(result[0].slug).toBe('vbucks')
-    expect(result[1].slug).toBe('fortnite-crew')
+    expect(result[1].slug).toBe('pases-crew-dlc')
   })
 
   it('should preserve order of regular sections from API', () => {
@@ -512,5 +509,123 @@ describe('buildShopDisplayModel with special sections', () => {
     expect(result).toHaveLength(2)
     expect(result[0].title).toBe('Daily')
     expect(result[1].title).toBe('Featured')
+  })
+
+  it('should order sections: regular → V-Bucks → Pases/Crew/DLC → Pistas', () => {
+    const items = [
+      createMockShopItemWithProduct({ type: 'OUTFIT', name: 'Skin' }, { section: 'Featured' }),
+      createMockShopItemWithProduct({ type: 'VBucks', name: '1000 V-Bucks' }, { section: 'V-Bucks' }),
+      createMockShopItemWithProduct({ type: 'BATTLE_PASS', name: 'Season Pass' }, { section: 'Battle Pass' }),
+      createMockShopItemWithProduct({ type: 'CREW', name: 'Fortnite Crew' }, { section: 'Crew' }),
+      createMockShopItemWithProduct({ type: 'JAM_TRACK', name: 'Jam Track 1' }, { section: 'Jam Tracks' }),
+    ]
+
+    const result = buildShopDisplayModel(items)
+
+    expect(result).toHaveLength(4)
+    expect(result[0].title).toBe('Featured')
+    expect(result[1].slug).toBe('vbucks')
+    expect(result[2].slug).toBe('pases-crew-dlc')
+    expect(result[3].slug).toBe('pistas-de-improvisacion')
+  })
+})
+
+describe('buildShopDisplayModel price filtering', () => {
+  it('should filter out products where both product and shop_item price are 0', () => {
+    const items = [
+      createMockShopItemWithProduct(
+        { name: 'Valid Product', price_vbucks: 1000 },
+        { section: 'Featured', price_vbucks: 1000 }
+      ),
+      createMockShopItemWithProduct(
+        { name: 'Zero Price Product', price_vbucks: 0 },
+        { section: 'Featured', price_vbucks: 0 }
+      ),
+    ]
+
+    const result = buildShopDisplayModel(items)
+
+    expect(result).toHaveLength(1)
+    expect(result[0].entries).toHaveLength(1)
+    if (result[0].entries[0].type === 'item') {
+      expect(result[0].entries[0].product.name).toBe('Valid Product')
+    }
+  })
+
+  it('should keep products with valid ShopItem price even if product price is 0', () => {
+    const items = [
+      createMockShopItemWithProduct(
+        { name: 'Product with 0 price', price_vbucks: 0 },
+        { section: 'Featured', price_vbucks: 500 }
+      ),
+    ]
+
+    const result = buildShopDisplayModel(items)
+
+    expect(result).toHaveLength(1)
+    expect(result[0].entries).toHaveLength(1)
+    if (result[0].entries[0].type === 'item') {
+      expect(result[0].entries[0].priceVbucks).toBe(500)
+    }
+  })
+
+  it('should keep products with valid product price even if shop_item price is 0', () => {
+    const items = [
+      createMockShopItemWithProduct(
+        { name: 'Product with valid price', price_vbucks: 800 },
+        { section: 'Featured', price_vbucks: 0 }
+      ),
+    ]
+
+    const result = buildShopDisplayModel(items)
+
+    expect(result).toHaveLength(1)
+    expect(result[0].entries).toHaveLength(1)
+    if (result[0].entries[0].type === 'item') {
+      expect(result[0].entries[0].priceVbucks).toBe(800)
+    }
+  })
+
+  it('should filter out bundles with price 0', () => {
+    const items = [
+      createMockShopItemWithProduct(
+        { name: 'Bundle Item', price_vbucks: 0 },
+        {
+          section: 'Featured',
+          price_vbucks: 0,
+          bundle_info: { name: 'Zero Bundle', info: 'Bundle', image: 'https://example.com/img.png' },
+        }
+      ),
+      createMockShopItemWithProduct(
+        { name: 'Valid Item', price_vbucks: 1000 },
+        { section: 'Featured', price_vbucks: 1000 }
+      ),
+    ]
+
+    const result = buildShopDisplayModel(items)
+
+    expect(result).toHaveLength(1)
+    expect(result[0].entries).toHaveLength(1)
+    if (result[0].entries[0].type === 'item') {
+      expect(result[0].entries[0].product.name).toBe('Valid Item')
+    }
+  })
+
+  it('should not have duplicate products within a section', () => {
+    const items = [
+      createMockShopItemWithProduct(
+        { id: 'prod-1', name: 'Duplicate Product', price_vbucks: 1000 },
+        { id: 'si-1', product_id: 'prod-1', section: 'Featured', price_vbucks: 1000 }
+      ),
+      createMockShopItemWithProduct(
+        { id: 'prod-1', name: 'Duplicate Product', price_vbucks: 1000 },
+        { id: 'si-2', product_id: 'prod-1', section: 'Featured', price_vbucks: 1000 }
+      ),
+    ]
+
+    const result = buildShopDisplayModel(items)
+
+    expect(result).toHaveLength(1)
+    expect(result[0].entries).toHaveLength(1)
   })
 })

@@ -144,14 +144,18 @@ describe('catalog-worker syncCatalog (shop entries)', () => {
     const [first, second, third] = state.createdShopItems
     expect(first).toBeDefined()
     expect(first.layout_id).toBe('SummerBatman')
-    const firstTheme = first.theme as { color1?: string; tileImage?: string }
-    expect(firstTheme.color1).toMatch(/^#[0-9a-f]{6,8}$/)
-    expect(firstTheme.tileImage).toMatch(/^https:\/\/.*fortnite-api\.com/)
 
     expect(second.layout_id).toBeTruthy()
-    expect(second.theme).toBeUndefined()
 
     expect(third.layout_id).toBeNull()
+
+    const themed = state.createdShopItems.find((item) => item.theme)
+    expect(themed).toBeDefined()
+    expect(themed?.theme).toMatchObject({
+      color1: '#f86b71ff',
+      color3: '#ffa9a5ff',
+      textBackgroundColor: '#784042ff',
+    })
   })
 
   it('never creates duplicate loose shop items and expands bundles into component rows', async () => {

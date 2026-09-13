@@ -7,10 +7,10 @@ export const metadata: Metadata = {
 
 export default function AccountRequestsPage() {
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen bg-purple-950">
       <div className="mx-auto max-w-3xl px-4 py-8">
         <h1 className="text-2xl font-bold text-white">Mis solicitudes</h1>
-        <p className="mt-1 text-sm text-gray-400">
+        <p className="mt-1 text-sm text-purple-300">
           Historial de tus solicitudes de compra y su estado actual.
         </p>
 

@@ -20,7 +20,7 @@ export default function DashboardPage() {
     return (
       <div className="p-8">
         <AdminPageHeader title="Dashboard" description="Métricas generales" />
-        <div className="animate-pulse text-gray-400">Cargando métricas...</div>
+        <div className="animate-pulse text-purple-300">Cargando métricas...</div>
       </div>
     )
   }
@@ -48,8 +48,8 @@ export default function DashboardPage() {
 
 function MetricCard({ title, value, highlight }: { title: string; value: string | number; highlight?: boolean }) {
   return (
-    <div className={`rounded-lg border p-4 ${highlight ? 'border-yellow-700 bg-yellow-900/20' : 'border-gray-800 bg-gray-900'}`}>
-      <p className="text-sm text-gray-400">{title}</p>
+    <div className={`rounded-lg border p-4 ${highlight ? 'border-yellow-700 bg-yellow-900/20' : 'border-purple-800 bg-purple-900'}`}>
+      <p className="text-sm text-purple-300">{title}</p>
       <p className={`mt-1 text-2xl font-bold ${highlight ? 'text-yellow-400' : 'text-white'}`}>{value}</p>
     </div>
   )

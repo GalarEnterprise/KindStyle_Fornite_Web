@@ -48,7 +48,7 @@ describe('Cart Validators', () => {
     it('producto especial sin credentials pasa validación de forma (el servicio lo rechaza)', () => {
       const result = AddToCartSchema.safeParse({
         productId: '123e4567-e89b-12d3-a456-426614174000',
-        type: 'VBucks',
+        type: 'GIFT',
       })
       expect(result.success).toBe(true)
     })

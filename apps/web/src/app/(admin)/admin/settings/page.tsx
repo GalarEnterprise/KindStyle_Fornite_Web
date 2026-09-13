@@ -64,7 +64,7 @@ export default function AdminSettingsPage() {
     return (
       <div className="p-8">
         <AdminPageHeader title="Configuración" description="Ajustes del sistema" />
-        <div className="animate-pulse text-gray-400">Cargando configuración...</div>
+        <div className="animate-pulse text-purple-300">Cargando configuración...</div>
       </div>
     )
   }
@@ -81,7 +81,7 @@ export default function AdminSettingsPage() {
               step="0.01"
               value={form.vbucks_price_mxn}
               onChange={(e) => setForm({ ...form, vbucks_price_mxn: e.target.value })}
-              className="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white"
+              className="w-full rounded border border-purple-700 bg-purple-900 px-3 py-2 text-sm text-white"
             />
           </Field>
         </Section>
@@ -92,7 +92,7 @@ export default function AdminSettingsPage() {
               type="number"
               value={form.friendship_period_hours}
               onChange={(e) => setForm({ ...form, friendship_period_hours: e.target.value })}
-              className="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white"
+              className="w-full rounded border border-purple-700 bg-purple-900 px-3 py-2 text-sm text-white"
             />
           </Field>
         </Section>
@@ -103,7 +103,7 @@ export default function AdminSettingsPage() {
               type="number"
               value={form.max_concurrent_sessions}
               onChange={(e) => setForm({ ...form, max_concurrent_sessions: e.target.value })}
-              className="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white"
+              className="w-full rounded border border-purple-700 bg-purple-900 px-3 py-2 text-sm text-white"
             />
           </Field>
         </Section>
@@ -114,7 +114,7 @@ export default function AdminSettingsPage() {
               type="text"
               value={form.whatsapp_number}
               onChange={(e) => setForm({ ...form, whatsapp_number: e.target.value })}
-              className="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white"
+              className="w-full rounded border border-purple-700 bg-purple-900 px-3 py-2 text-sm text-white"
             />
           </Field>
           <Field label="Email From (Resend)">
@@ -122,7 +122,7 @@ export default function AdminSettingsPage() {
               type="email"
               value={form.email_from}
               onChange={(e) => setForm({ ...form, email_from: e.target.value })}
-              className="w-full rounded border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-white"
+              className="w-full rounded border border-purple-700 bg-purple-900 px-3 py-2 text-sm text-white"
             />
           </Field>
         </Section>
@@ -133,9 +133,9 @@ export default function AdminSettingsPage() {
               type="checkbox"
               checked={form.maintenance_mode}
               onChange={(e) => setForm({ ...form, maintenance_mode: e.target.checked })}
-              className="h-4 w-4 rounded border-gray-600 bg-gray-800"
+              className="h-4 w-4 rounded border-purple-600 bg-purple-900"
             />
-            <span className="text-sm text-gray-300">Modo mantenimiento</span>
+            <span className="text-sm text-purple-100">Modo mantenimiento</span>
           </label>
         </Section>
 
@@ -157,8 +157,8 @@ export default function AdminSettingsPage() {
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-gray-800 bg-gray-900 p-4">
-      <h3 className="mb-3 text-sm font-medium text-gray-300">{title}</h3>
+    <div className="rounded-lg border border-purple-800 bg-purple-900 p-4">
+      <h3 className="mb-3 text-sm font-medium text-purple-100">{title}</h3>
       <div className="space-y-3">{children}</div>
     </div>
   )
@@ -167,7 +167,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs text-gray-400">{label}</label>
+      <label className="block text-xs text-purple-300">{label}</label>
       <div className="mt-1">{children}</div>
     </div>
   )

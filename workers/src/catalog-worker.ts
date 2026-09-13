@@ -2,7 +2,6 @@ import { Worker, Queue } from 'bullmq'
 import IORedis from 'ioredis'
 import type { Prisma } from '@prisma/client'
 import { PrismaClient } from '@kindstyle/database'
-import { extractEntryTheme, type ShopEntryTheme } from '@kindstyle/shared'
 import { createProvider, type NormalizedShopEntry } from './providers'
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://localhost:6379'
@@ -13,6 +12,15 @@ const LOCK_TTL_SECONDS = 300
 
 const prisma = new PrismaClient()
 const redis = new IORedis(REDIS_URL, { maxRetriesPerRequest: null })
+
+function bullConnection(): { host: string; port: number } {
+  try {
+    const url = new URL(REDIS_URL)
+    return { host: url.hostname, port: Number(url.port || 6379) }
+  } catch {
+    return { host: 'localhost', port: 6379 }
+  }
+}
 
 interface FortniteBannerApiItem {
   id: string
@@ -141,6 +149,74 @@ async function invalidateCache(): Promise<void> {
   console.log('[CatalogWorker] Shop cache invalidated')
 }
 
+async function upsertSpecialProduct(
+  tx: Prisma.TransactionClient,
+  product: NormalizedShopEntry,
+  nextSkuNum: { value: number },
+): Promise<string | null> {
+  const existing = await tx.product.findFirst({
+    where: { fortnite_product_id: product.fortniteProductId },
+  })
+
+  if (existing) {
+    // Only update images, don't overwrite admin-configured prices
+    const updateData: any = {
+      image_url: product.imageUrl,
+      icon_url: product.iconUrl,
+      last_seen_at: new Date(),
+    }
+
+    // Only update name/slug if they changed (but preserve admin customizations)
+    if (existing.name !== product.name) {
+      updateData.name = product.name
+    }
+
+    await tx.product.update({
+      where: { id: existing.id },
+      data: updateData,
+    })
+
+    console.log(`[CatalogWorker] Updated special product: ${existing.name} (${existing.fortnite_product_id})`)
+    return existing.id
+  } else {
+    // Create new special product
+    nextSkuNum.value++
+    const sku = `FORT-${String(nextSkuNum.value).padStart(6, '0')}`
+
+    let slug = product.slug
+    let suffix = 1
+    while (await tx.product.findUnique({ where: { slug } })) {
+      suffix++
+      slug = `${product.slug}-${suffix}`
+    }
+
+    const newProduct = await tx.product.create({
+      data: {
+        internal_sku: sku,
+        fortnite_product_id: product.fortniteProductId,
+        name: product.name,
+        slug,
+        description: product.description,
+        type: product.type as any,
+        rarity: product.rarity as any,
+        series: product.series,
+        price_vbucks: product.priceVbucks,
+        image_url: product.imageUrl,
+        icon_url: product.iconUrl,
+        featured_image_url: product.featuredImageUrl,
+        giftable: product.giftable as any,
+        active: true,
+        visible: true,
+        first_seen_at: new Date(),
+        last_seen_at: new Date(),
+      },
+    })
+
+    console.log(`[CatalogWorker] Created special product: ${newProduct.name} (${newProduct.fortnite_product_id})`)
+    return newProduct.id
+  }
+}
+
 export async function syncCatalog(): Promise<void> {
   const locked = await acquireLock()
   if (!locked) {
@@ -161,6 +237,40 @@ export async function syncCatalog(): Promise<void> {
 
     const normalizedShop = result.data
     const checksum = normalizedShop.checksum
+
+    // Fallback: if provider didn't include Crew/BattlePass, pull from existing DB products
+    const SPECIAL_FALLBACK_IDS = ['CREW_CURRENT', 'BATTLE_PASS_CURRENT']
+    for (const fallbackId of SPECIAL_FALLBACK_IDS) {
+      const hasProduct = normalizedShop.specialProducts.some(
+        (p) => p.fortniteProductId === fallbackId
+      )
+      if (!hasProduct) {
+        const existingProduct = await prisma.product.findFirst({
+          where: { fortnite_product_id: fallbackId },
+        })
+        if (existingProduct) {
+          console.log(`[CatalogWorker] Fallback: using existing DB product for ${fallbackId}`)
+          normalizedShop.specialProducts.push({
+            fortniteProductId: existingProduct.fortnite_product_id,
+            name: existingProduct.name,
+            slug: existingProduct.slug,
+            description: existingProduct.description,
+            type: existingProduct.type,
+            rarity: existingProduct.rarity,
+            series: existingProduct.series,
+            priceVbucks: existingProduct.price_vbucks,
+            imageUrl: existingProduct.image_url,
+            iconUrl: existingProduct.icon_url,
+            featuredImageUrl: existingProduct.featured_image_url,
+            giftable: existingProduct.giftable,
+            section: null,
+            layoutId: null,
+            offerId: null,
+            bundleInfo: null,
+          })
+        }
+      }
+    }
 
     const latestSnapshot = await prisma.shopSnapshot.findFirst({
       orderBy: { fetched_at: 'desc' },
@@ -192,6 +302,7 @@ export async function syncCatalog(): Promise<void> {
 
       const productMap = new Map<string, string>()
 
+      // Upsert regular products
       for (const product of new Map(normalizedShop.entries.map((p) => [p.fortniteProductId, p])).values()) {
         const existing = await tx.product.findFirst({
           where: { fortnite_product_id: product.fortniteProductId },
@@ -251,6 +362,16 @@ export async function syncCatalog(): Promise<void> {
         }
       }
 
+      // Upsert special products (VBucks, Battle Pass, Crew)
+      const specialProductIdMap = new Map<string, string>()
+      const skuCounter = { value: nextSkuNum }
+      for (const specialProduct of normalizedShop.specialProducts) {
+        const productId = await upsertSpecialProduct(tx, specialProduct, skuCounter)
+        if (productId) {
+          specialProductIdMap.set(specialProduct.fortniteProductId, productId)
+        }
+      }
+
       const snapshot = await tx.shopSnapshot.create({
         data: {
           provider: normalizedShop.provider,
@@ -262,6 +383,8 @@ export async function syncCatalog(): Promise<void> {
       })
 
       let displayOrder = 0
+
+      // Create shop_items for regular products
       for (const product of normalizedShop.entries) {
         const productId = productMap.get(product.fortniteProductId)
         if (productId) {
@@ -275,7 +398,28 @@ export async function syncCatalog(): Promise<void> {
               layout_id: product.layoutId,
               offer_id: product.offerId,
               bundle_info: product.bundleInfo || undefined,
+              theme: product.theme ? (product.theme as Prisma.InputJsonValue) : undefined,
               featured: displayOrder <= 5,
+            },
+          })
+        }
+      }
+
+      // Create shop_items for special products (with section = null for display model grouping)
+      for (const specialProduct of normalizedShop.specialProducts) {
+        const productId = specialProductIdMap.get(specialProduct.fortniteProductId)
+        if (productId) {
+          await tx.shopItem.create({
+            data: {
+              shop_snapshot_id: snapshot.id,
+              product_id: productId,
+              price_vbucks: specialProduct.priceVbucks,
+              display_order: displayOrder++,
+              section: null, // Special products are grouped by type, not section
+              layout_id: null,
+              offer_id: specialProduct.offerId,
+              theme: specialProduct.theme ? (specialProduct.theme as Prisma.InputJsonValue) : undefined,
+              featured: false,
             },
           })
         }
@@ -300,11 +444,11 @@ export class CatalogWorker {
   private worker!: Worker
 
   async start() {
-    this.queue = new Queue('catalog-sync', { connection: { host: 'localhost', port: 6379 } })
+    this.queue = new Queue('catalog-sync', { connection: bullConnection() })
 
     this.worker = new Worker('catalog-sync', async () => {
       await syncCatalog()
-    }, { connection: { host: 'localhost', port: 6379 } })
+    }, { connection: bullConnection() })
 
     this.worker.on('completed', (job) => {
       console.log(`[CatalogWorker] Job ${job.id} completed`)

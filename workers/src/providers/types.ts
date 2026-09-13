@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { ShopEntryTheme } from '@kindstyle/shared'
 
 export interface NormalizedShopEntry {
   fortniteProductId: string
@@ -9,6 +10,7 @@ export interface NormalizedShopEntry {
   rarity: string | null
   series: string | null
   priceVbucks: number
+  priceMxn?: number
   imageUrl: string | null
   iconUrl: string | null
   featuredImageUrl: string | null
@@ -17,10 +19,12 @@ export interface NormalizedShopEntry {
   layoutId: string | null
   offerId: string | null
   bundleInfo: { name: string; info: string; image: string } | null
+  theme?: ShopEntryTheme | null
 }
 
 export interface NormalizedShop {
   entries: NormalizedShopEntry[]
+  specialProducts: NormalizedShopEntry[]
   shopDate: string
   checksum: string
   provider: string
@@ -52,6 +56,7 @@ export const NormalizedShopEntrySchema = z.object({
   rarity: z.string().nullable(),
   series: z.string().nullable(),
   priceVbucks: z.number(),
+  priceMxn: z.number().optional(),
   imageUrl: z.string().nullable(),
   iconUrl: z.string().nullable(),
   featuredImageUrl: z.string().nullable(),
@@ -64,10 +69,18 @@ export const NormalizedShopEntrySchema = z.object({
     info: z.string(),
     image: z.string(),
   }).nullable(),
+  theme: z.object({
+    color1: z.string().optional(),
+    color2: z.string().optional(),
+    color3: z.string().optional(),
+    textBackgroundColor: z.string().optional(),
+    tileImage: z.string().optional(),
+  }).nullable().optional(),
 })
 
 export const NormalizedShopSchema = z.object({
   entries: z.array(NormalizedShopEntrySchema),
+  specialProducts: z.array(NormalizedShopEntrySchema),
   shopDate: z.string(),
   checksum: z.string(),
   provider: z.string(),

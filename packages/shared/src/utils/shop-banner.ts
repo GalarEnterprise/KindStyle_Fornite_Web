@@ -69,6 +69,9 @@ export function extractEntryTheme(entry: ShopThemeSourceEntry | null | undefined
   const color1 = normalizeHexColor(entry.colors?.color1)
   if (color1) theme.color1 = color1
 
+  const color2 = normalizeHexColor(entry.colors?.color2)
+  if (color2) theme.color2 = color2
+
   const color3 = normalizeHexColor(entry.colors?.color3)
   if (color3) theme.color3 = color3
 

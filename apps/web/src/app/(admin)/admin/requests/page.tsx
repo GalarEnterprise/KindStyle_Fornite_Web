@@ -58,7 +58,7 @@ export default function AdminRequestsPage() {
             className={`rounded-md px-3 py-1.5 text-sm ${
               status === tab.value
                 ? 'bg-purple-600 text-white'
-                : 'border border-gray-700 text-gray-300 hover:bg-gray-800'
+                : 'border border-purple-700 text-purple-200 hover:bg-purple-900'
             }`}
           >
             {tab.label}
@@ -67,7 +67,7 @@ export default function AdminRequestsPage() {
       </div>
 
       {isLoading ? (
-        <div className="animate-pulse text-gray-400">Cargando solicitudes...</div>
+        <div className="animate-pulse text-purple-300">Cargando solicitudes...</div>
       ) : selected ? (
         <RequestDetail request={selected} onBack={() => setSelected(null)} onCopy={handleCopy} />
       ) : (
@@ -104,39 +104,39 @@ function RequestDetail({ request, onBack, onCopy }: { request: Request; onBack: 
         ← Volver a la lista
       </button>
 
-      <div className="rounded-lg border border-gray-800 bg-gray-900 p-6">
+      <div className="rounded-lg border border-purple-800 bg-purple-900 p-6">
         <div className="flex items-center gap-2">
           <h2 className="text-lg font-bold text-white">{request.request_number}</h2>
-          <button onClick={() => onCopy(request.request_number)} className="text-gray-400 hover:text-white text-xs">
+          <button onClick={() => onCopy(request.request_number)} className="text-purple-300 hover:text-white text-xs">
             [COPIAR]
           </button>
         </div>
 
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div>
-            <p className="text-xs text-gray-400">Cliente</p>
+            <p className="text-xs text-purple-300">Cliente</p>
             <p className="text-sm text-white">{request.user.nickname ?? request.user.email}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-400">Estado</p>
+            <p className="text-xs text-purple-300">Estado</p>
             <p className="text-sm text-white">{request.status}</p>
           </div>
           <div>
-            <p className="text-xs text-gray-400">Total</p>
+            <p className="text-xs text-purple-300">Total</p>
             <p className="text-sm text-white">${request.total_mxn} MXN</p>
           </div>
           <div>
-            <p className="text-xs text-gray-400">V-Bucks</p>
+            <p className="text-xs text-purple-300">V-Bucks</p>
             <p className="text-sm text-white">{request.total_vbucks}</p>
           </div>
         </div>
 
         <div className="mt-4">
-          <p className="text-xs text-gray-400 mb-2">Productos</p>
+          <p className="text-xs text-purple-300 mb-2">Productos</p>
           {request.items.map((item) => (
-            <div key={item.id} className="flex justify-between border-t border-gray-800 py-2 text-sm">
-              <span className="text-gray-300">{item.product_name_snapshot}</span>
-              <span className="text-gray-400">{item.price_vbucks_snapshot} VB x {item.quantity}</span>
+            <div key={item.id} className="flex justify-between border-t border-purple-800 py-2 text-sm">
+              <span className="text-purple-100">{item.product_name_snapshot}</span>
+              <span className="text-purple-300">{item.price_vbucks_snapshot} VB x {item.quantity}</span>
             </div>
           ))}
         </div>
